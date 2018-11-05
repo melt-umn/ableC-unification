@@ -22,7 +22,8 @@ top::Expr ::= ty::TypeName init::MaybeExpr
   local fwrd::Expr =
     ableC_Expr {
       proto_typedef _var_d;
-      ({inst _var_d<$TypeName{ty}> *_result = alloca(sizeof(_result));
+      ({inst _var_d<$TypeName{ty}> *_result =
+          alloca(sizeof(inst _var_d<$directTypeExpr{ty.typerep}>));
         *_result = $Expr{
           case init of
           | nothingExpr() ->

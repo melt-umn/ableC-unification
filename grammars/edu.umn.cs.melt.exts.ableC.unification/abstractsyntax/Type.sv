@@ -75,18 +75,18 @@ top::ExtType ::= sub::Type
         adtExtType(
           "_var_d",
           templateMangledName("_var_d", [sub]),
-          templateMangledRefId("_var_d", [sub]))));
+          templateMangledRefId("_var_d", [sub]))).host);
   top.mangledName = s"var_${sub.mangledName}_";
   top.isEqualTo =
     \ other::ExtType ->
       case other of
-        varType(otherSub) -> compatibleTypes(sub, otherSub, false, false)
+      | varType(otherSub) -> compatibleTypes(sub, otherSub, false, false)
       | _ -> false
       end;
   
   top.maybeRefId = just(templateMangledRefId("_var_d", [sub]));
   top.adtName = just("_var_d");
-  --top.showProd = just(showVar(_, location=_));
+  top.showProd = just(showVar(_, location=_));
   top.lUnifyProd =
     case top.otherType of
     | extType(_, varType(_)) -> just(varVarUnifyExpr(_, _, _, location=_))
@@ -105,7 +105,7 @@ Type ::= t::Type
 {
   return
     case t of
-      extType(_, varType(sub)) -> sub
+    | extType(_, varType(sub)) -> sub
     | _ -> errorType()
     end;
 }

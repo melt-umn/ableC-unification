@@ -42,16 +42,16 @@ template<a>
 string show_var(a ?var) {
   if (inst is_bound<a>(var)) {
     return "?&" + show(inst value<a>(var));
-  } else{
+  } else {
     char buffer[24];
-    sprintf(buffer, "<var %lx>", (void *)var);
+    sprintf(buffer, "<var %x>", (union {a ?v; unsigned n;}){.v = var}.n);
     return str(buffer);
   }
 }
 
-typedef vector<enum _var_d_tag *> unification_trail_t;
+typedef vector<enum _var_d_tag *> unification_trail;
 
-static void undo_trail(unification_trail_t trail) {
+static void undo_trail(unification_trail trail) {
   trail.length;
   for (size_t i = 0; i < trail.length; i++) {
    *trail[i] = _var_d__Free;
@@ -60,7 +60,7 @@ static void undo_trail(unification_trail_t trail) {
 }
 
 template<a>
-_Bool _unify_var_val(a ?var, a val, unification_trail_t trail) {
+_Bool _unify_var_val(a ?var, a val, unification_trail trail) {
   match ((inst _var_d<a> *)var) {
     v@&_Free() -> {
       *v = inst _Bound<a>(val);
@@ -79,19 +79,24 @@ _Bool _unify_var_val(a ?var, a val, unification_trail_t trail) {
 }
 
 template<a>
-_Bool _unify_var_var(a ?var1, a? var2, unification_trail_t trail) {
-  match ((inst _var_d<a> *)var1) {
-    v@&_Free() -> {
-      *v = inst _BoundVar<a>(var2);
-      if ((void*)trail) {
-        trail.append(&v->tag);
+_Bool _unify_var_var(a ?var1, a? var2, unification_trail trail) {
+  match ((inst _var_d<a> *)var1, (inst _var_d<a> *)var2) {
+    v1@&_Free(), v2@&_Free() -> {
+      if (v1 != v2) {
+        *v1 = inst _BoundVar<a>(var2);
+        if ((void*)trail) {
+          trail.append(&v1->tag);
+        }
       }
       return 1;
     }
-    &_Bound(other_val) -> {
+    &_Free(), _ -> {
+      return inst _unify_var_var<a>(var2, var1, trail);
+    }
+    &_Bound(other_val), _ -> {
       return inst _unify_var_val<a>(var2, other_val, trail);
     }
-    &_BoundVar(other_var) -> {
+    &_BoundVar(other_var), _ -> {
       return inst _unify_var_var<a>(other_var, var2, trail);
     }
   }
