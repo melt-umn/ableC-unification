@@ -155,7 +155,7 @@ attribute unifyTransform<ExprClause> occurs on Constructor;
 aspect production constructor
 top::Constructor ::= n::Name ps::Parameters
 {
-  top.unifyErrors = ps.errors;
+  top.unifyErrors = ps.unifyErrors;
   top.unifyTransform =
     exprClause(
       consPattern(

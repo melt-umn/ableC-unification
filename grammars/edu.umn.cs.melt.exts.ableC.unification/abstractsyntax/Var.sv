@@ -10,6 +10,9 @@ top::Expr ::= ty::TypeName init::MaybeExpr
   
   local localErrors::[Message] =
     ty.errors ++ init.errors ++
+    (if !ty.typerep.isCompleteType(top.env)
+     then [err(top.location, s"var type parameter has incomplete type ${showType(ty.typerep)}")]
+     else []) ++
     case init of
     | justExpr(e) ->
       if compatibleTypes(e.typerep, ty.typerep, false, false)
@@ -46,9 +49,14 @@ top::Expr ::= e::Expr
   propagate substituted;
   top.pp = pp"?&(${e.pp})";
   
+  local subType::Type = varSubType(e.typerep);
   local localErrors::[Message] =
     e.errors ++
+    (if !subType.isCompleteType(top.env)
+     then [err(top.location, s"var type parameter has incomplete type ${showType(subType)}")]
+     else []) ++
     checkUnificationHeaderTemplateDef("_var_d", top.location, top.env);
+  
   local fwrd::Expr =
     newVarExpr(
       typeName(directTypeExpr(e.typerep), baseTypeExpr()),
@@ -63,10 +71,13 @@ top::Expr ::= e::Expr
   propagate substituted;
   top.pp = pp"show(${e.pp})";
   
-  local localErrors::[Message] =
-    checkUnificationHeaderTemplateDef("show_var", top.location, top.env);
-    
   local subType::Type = varSubType(e.typerep);
+  local localErrors::[Message] =
+    (if !subType.isCompleteType(top.env)
+     then [err(top.location, s"var type parameter has incomplete type ${showType(subType)}")]
+     else []) ++
+    checkUnificationHeaderTemplateDef("show_var", top.location, top.env);
+  
   local fwrd::Expr =
     ableC_Expr { inst show_var<$directTypeExpr{subType}>($Expr{e}) };
   

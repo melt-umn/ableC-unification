@@ -105,7 +105,6 @@ top::ExtType ::= sub::Type
       | _ -> false
       end;
   
-  top.adtName = just("_var_d");
   top.showProd = just(showVar(_, location=_));
   
   local topType::Type = extType(top.givenQualifiers, top);
@@ -140,6 +139,10 @@ top::ExtType ::= adtName::String adtDeclName::String refId::String
         if refId == otherRefId
         then []
         else [err(l, s"unify datatypes must match (got datatype ${adtName}, datatype ${otherAdtName})")]
+      | extType(_, varType(extType(_, adtExtType(otherAdtName, _, otherRefId)))) ->
+        if refId == otherRefId
+        then []
+        else [err(l, s"unify value and variable datatypes must match (got datatype ${adtName}, datatype ${otherAdtName})")]
       | errorType() -> []
       | t -> [err(l, s"unify is not defined for datatype ${adtName} and non-datatype ${showType(t)}")]
       end ++
@@ -150,8 +153,8 @@ top::ExtType ::= adtName::String adtDeclName::String refId::String
   top.unifyProd =
     case top.otherType of
     | extType(_, adtExtType(_, _, _)) -> adtUnifyExpr(_, _, _, location=_)
+    | extType(_, varType(_)) -> valVarUnifyExpr(_, _, _, location=_)
     | errorType() -> \ Expr Expr Expr l::Location -> errorExpr([], location=l)
-    | _ -> varValUnifyExpr(_, _, _, location=_)
     end;
 }
 
