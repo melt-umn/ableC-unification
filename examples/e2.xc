@@ -11,9 +11,9 @@ datatype Tree {
 template var_reference datatype Tree with alloca;
 
 int main() {
-  inst Tree<int> ?a = inst alloca_Node<int>(inst alloca_Leaf<int>(42), freshvar<inst Tree<int>>(alloca));
+  inst Tree<int> ?a = inst alloca_Node<int>(inst alloca_Leaf<int>(42), freevar<inst Tree<int>>(alloca));
   printf("%s\n", show(a).text);
-  inst Tree<int> ?b = inst alloca_Node<int>(freshvar<inst Tree<int>>(alloca), inst alloca_Node<int>(inst alloca_Leaf<int>(25), freshvar<inst Tree<int>>(alloca)));
+  inst Tree<int> ?b = inst alloca_Node<int>(freevar<inst Tree<int>>(alloca), inst alloca_Node<int>(inst alloca_Leaf<int>(25), freevar<inst Tree<int>>(alloca)));
   printf("%s\n", show(b).text);
 
   unification_trail trail = new unification_trail();

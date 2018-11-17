@@ -20,6 +20,7 @@ top::Expr ::= e1::Expr e2::Expr trail::MaybeExpr
   type.otherType = e2.typerep;
   
   local localErrors::[Message] =
+    e1.errors ++ e2.errors ++ trail.errors ++
     type.unifyErrors(top.location, top.env) ++
     checkUnificationHeaderDef("unification_trail", top.location, top.env);
   

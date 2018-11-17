@@ -9,7 +9,7 @@ terminal With_t 'with';
 
 concrete productions top::Declaration_c
 -- id is Identifer_t here to avoid follow spillage
-| VarReference_t 'datatype' id::Identifier_t 'with' alloc::Identifier_c ';'
+| VarReference_t Datatype_t id::Identifier_t 'with' alloc::Identifier_c ';'
   { top.ast = varReferenceDecl(fromId(id), alloc.ast); }
-| 'template' NonKeywordVarReference_t 'datatype' id::Identifier_t 'with' alloc::Identifier_c ';'
+| 'template' NonKeywordVarReference_t Datatype_t id::Identifier_t 'with' alloc::Identifier_c ';'
   { top.ast = templateVarReferenceDecl(fromId(id), alloc.ast); }

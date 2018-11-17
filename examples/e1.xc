@@ -10,9 +10,9 @@ datatype Tree {
 var_reference datatype Tree with alloca;
 
 int main() {
-  datatype Tree ?a = alloca_Node(alloca_Leaf(42), freshvar<datatype Tree>(alloca));
+  datatype Tree ?a = alloca_Node(alloca_Leaf(42), freevar<datatype Tree>(alloca));
   printf("%s\n", show(a).text);
-  datatype Tree ?b = alloca_Node(freshvar<datatype Tree>(alloca), alloca_Node(alloca_Leaf(25), freshvar<datatype Tree>(alloca)));
+  datatype Tree ?b = alloca_Node(freevar<datatype Tree>(alloca), alloca_Node(alloca_Leaf(25), freevar<datatype Tree>(alloca)));
   printf("%s\n", show(b).text);
 
   unification_trail trail = new unification_trail();

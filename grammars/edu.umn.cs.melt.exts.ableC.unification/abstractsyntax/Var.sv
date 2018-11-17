@@ -2,11 +2,11 @@ grammar edu:umn:cs:melt:exts:ableC:unification:abstractsyntax;
 
 import edu:umn:cs:melt:ableC:abstractsyntax:overloadable;
 
-abstract production freshVarExpr
+abstract production freeVarExpr
 top::Expr ::= ty::TypeName allocator::Expr
 {
   propagate substituted;
-  top.pp = pp"freshvar<${ty.pp}>(${allocator.pp})";
+  top.pp = pp"freevar<${ty.pp}>(${allocator.pp})";
   
   local expectedAllocatorType::Type =
     functionType(
