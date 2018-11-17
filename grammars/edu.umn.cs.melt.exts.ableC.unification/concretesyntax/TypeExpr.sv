@@ -1,6 +1,6 @@
 grammar edu:umn:cs:melt:exts:ableC:unification:concretesyntax;
 
-marking terminal Var_t '?';
+marking terminal VarType_t '?';
 
 concrete productions top::Pointer_c
 | '?'

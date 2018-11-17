@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 int main() {
-  int a = 5, ?b = newvar<int>(), ?c = newvar<int>();
+  int a = 5, ?b = freshvar<int>(alloca), ?c = freshvar<int>(malloc);
   printf("%s %d %d\n", show(c).text, inst is_bound<int>(c), inst is_bound<int>(c)? inst value<int>(c) : -1);
   
   bool res1 = unify(c, b);
@@ -30,4 +30,6 @@ int main() {
   bool res5 = unify(c, 7);
   printf("unify 5: %d\n", res5);
   printf("%s %d %d\n", show(c).text, inst is_bound<int>(c), inst is_bound<int>(c)? inst value<int>(c) : -1);
+
+  inst delete_var<int>(free, c);
 }

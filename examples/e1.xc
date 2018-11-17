@@ -1,18 +1,18 @@
 #include <unification.xh>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
 datatype Tree {
   Node(datatype Tree ?l, datatype Tree ?r);
   Leaf(int val);
 };
 
+var_reference datatype Tree with alloca;
 
 int main() {
-  datatype Tree ?a = ?&Node(?&Leaf(42), newvar<datatype Tree>());
+  datatype Tree ?a = alloca_Node(alloca_Leaf(42), freshvar<datatype Tree>(alloca));
   printf("%s\n", show(a).text);
-  datatype Tree ?b = ?&Node(newvar<datatype Tree>(), ?&Node(?&Leaf(25), newvar<datatype Tree>()));
+  datatype Tree ?b = alloca_Node(freshvar<datatype Tree>(alloca), alloca_Node(alloca_Leaf(25), freshvar<datatype Tree>(alloca)));
   printf("%s\n", show(b).text);
 
   unification_trail trail = new unification_trail();
