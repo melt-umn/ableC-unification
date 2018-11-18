@@ -83,12 +83,15 @@ top::Expr ::= e1::Expr e2::Expr trail::Expr
   propagate substituted;
   top.pp = pp"unifyDatatype(${e1.pp}, ${e2.pp}, ${trail.pp})";
   
+  local adtLookup::[RefIdItem] =
+    case e1.typerep.maybeRefId of
+    | just(rid) -> lookupRefId(rid, top.env)
+    | nothing() -> []
+    end;
+  
   local adt::Decorated ADTDecl =
-    case e1.typerep of
-    | extType( _, e) ->
-      case lookupRefId(e.maybeRefId.fromJust, top.env) of
-      | adtRefIdItem(adt) :: _ -> adt
-      end
+    case adtLookup of
+    | adtRefIdItem(adt) :: _ -> adt
     end;
   
   forwards to
@@ -100,8 +103,7 @@ top::Expr ::= e1::Expr e2::Expr trail::Expr
       location=builtin);
 }
 
-synthesized attribute unifyErrors<a>::a;
-attribute unifyErrors<[Message]> occurs on ADTDecl, ConstructorList, Constructor, Parameters, ParameterDecl;
+attribute unifyErrors occurs on ADTDecl, ConstructorList, Constructor, Parameters, ParameterDecl;
 synthesized attribute unifyFnName::String occurs on ADTDecl;
 synthesized attribute unifyTransform<a>::a;
 attribute unifyTransform<Decls> occurs on ADTDecl;
@@ -110,10 +112,14 @@ aspect production adtDecl
 top::ADTDecl ::= n::Name cs::ConstructorList
 {
   top.unifyErrors =
-    if !null(cs.unifyErrors)
-    then [nested(top.location, s"In unification of datatype ${n.name}", cs.unifyErrors)]
-    else [];
-  
+    \ l::Location env::Decorated Env ->
+      if null(lookupValue(top.unifyFnName, env))
+      then
+        case cs.unifyErrors(top.location, addEnv([valueDef(top.unifyFnName, errorValueItem())], env)) of
+        | [] -> []
+        | m -> [nested(l, s"In unification of datatype ${top.adtGivenName}", m)]
+        end
+      else [];
   top.unifyFnName = "_unify_" ++ n.name;
   top.unifyTransform =
     ableC_Decls {
@@ -139,7 +145,8 @@ attribute unifyTransform<ExprClauses> occurs on ConstructorList;
 aspect production consConstructor
 top::ConstructorList ::= c::Constructor cl::ConstructorList
 {
-  top.unifyErrors = c.unifyErrors ++ cl.unifyErrors;
+  top.unifyErrors =
+    \ l::Location env::Decorated Env -> c.unifyErrors(l, env) ++ cl.unifyErrors(l, env);
   top.unifyTransform =
     consExprClause(c.unifyTransform, cl.unifyTransform, location=builtin);
 }
@@ -147,7 +154,7 @@ top::ConstructorList ::= c::Constructor cl::ConstructorList
 aspect production nilConstructor
 top::ConstructorList ::=
 {
-  top.unifyErrors = [];
+  top.unifyErrors = \ Location Decorated Env -> [];
   top.unifyTransform = failureExprClause(location=builtin);
 }
 
@@ -175,7 +182,8 @@ attribute unifyTransform<Expr> occurs on Parameters;
 aspect production consParameters
 top::Parameters ::= h::ParameterDecl t::Parameters
 {
-  top.unifyErrors = h.unifyErrors ++ t.unifyErrors;
+  top.unifyErrors =
+    \ l::Location env::Decorated Env -> h.unifyErrors(l, env) ++ t.unifyErrors(l, env);
   top.unifyPatterns1 = consPattern(h.unifyPattern1, t.unifyPatterns1);
   top.unifyPatterns2 = consPattern(h.unifyPattern2, t.unifyPatterns2);
   top.unifyTransform =
@@ -185,7 +193,7 @@ top::Parameters ::= h::ParameterDecl t::Parameters
 aspect production nilParameters
 top::Parameters ::= 
 {
-  top.unifyErrors = [];
+  top.unifyErrors = \ Location Decorated Env -> [];
   top.unifyPatterns1 = nilPattern();
   top.unifyPatterns2 = nilPattern();
   top.unifyTransform = mkIntConst(1, builtin);
@@ -200,7 +208,7 @@ top::ParameterDecl ::= storage::StorageClasses  bty::BaseTypeExpr  mty::TypeModi
 {
   local type::Type = top.typerep;
   type.otherType = type;
-  top.unifyErrors = type.unifyErrors(top.sourceLocation, top.env);
+  top.unifyErrors = \ Location env::Decorated Env -> type.unifyErrors(top.sourceLocation, env);
   
   local varName1::Name = name(fieldName.name ++ "1", location=builtin);
   local varName2::Name = name(fieldName.name ++ "2", location=builtin);

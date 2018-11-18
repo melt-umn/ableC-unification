@@ -31,7 +31,7 @@ top::TypeModifierExpr ::= q::Qualifiers sub::TypeModifierExpr loc::Location
           extTypeExpr(q, varType(sub.typerep))));
 }
 
-attribute unifyErrors<([Message] ::= Location Decorated Env)> occurs on Type, ExtType;
+synthesized attribute unifyErrors::([Message] ::= Location Decorated Env) occurs on Type, ExtType;
 synthesized attribute unifyProd::(Expr ::= Expr Expr Expr Location) occurs on Type, ExtType;
 
 aspect default production
@@ -39,11 +39,11 @@ top::Type ::=
 {
   -- TODO: Types should both be equality types
   top.unifyErrors =
-    \ l::Location Decorated Env ->
+    \ l::Location env::Decorated Env ->
       case top.otherType of
       | extType(_, varType(sub)) ->
         if compatibleTypes(top, sub, false, false)
-        then []
+        then decorate top with {otherType = sub;}.unifyErrors(l, env)
         else [err(l, s"unify value and variable types must match (got ${showType(top)}, ${showType(sub)})")]
       | t ->
         if compatibleTypes(top, t, false, false)
@@ -109,15 +109,15 @@ top::ExtType ::= sub::Type
   
   local topType::Type = extType(top.givenQualifiers, top);
   top.unifyErrors =
-    \ l::Location Decorated Env ->
+    \ l::Location env::Decorated Env ->
       case top.otherType of
       | extType(_, varType(otherSub)) ->
         if compatibleTypes(sub, otherSub, false, false)
-        then []
+        then decorate sub with {otherType = otherSub;}.unifyErrors(l, env)
         else [err(l, s"unify variable types must match (got ${showType(sub)}, ${showType(otherSub)})")]
       | t ->
         if compatibleTypes(sub, t, false, false)
-        then []
+        then decorate sub with {otherType = t;}.unifyErrors(l, env)
         else [err(l, s"unify variable and value types must match (got ${showType(sub)}, ${showType(t)})")]
       end;
   top.unifyProd =
@@ -147,7 +147,7 @@ top::ExtType ::= adtName::String adtDeclName::String refId::String
       | t -> [err(l, s"unify is not defined for datatype ${adtName} and non-datatype ${showType(t)}")]
       end ++
       case lookupRefId(refId, env) of
-      | adtRefIdItem(adt) :: _ -> adt.unifyErrors
+      | adtRefIdItem(adt) :: _ -> adt.unifyErrors(l, env)
       | _ -> [err(l, s"datatype ${adtName} does not have a definition.")]
       end;
   top.unifyProd =
