@@ -44,11 +44,11 @@ top::Type ::=
       | extType(_, varType(sub)) ->
         if compatibleTypes(top, sub, false, false)
         then decorate top with {otherType = sub;}.unifyErrors(l, env)
-        else [err(l, s"unify value and variable types must match (got ${showType(top)}, ${showType(sub)})")]
+        else [err(l, s"Unification value and variable types must match (got ${showType(top)}, ${showType(sub)})")]
       | t ->
         if compatibleTypes(top, t, false, false)
         then []
-        else [err(l, s"unify value types must match (got ${showType(top)}, ${showType(t)})")]
+        else [err(l, s"Unification value types must match (got ${showType(top)}, ${showType(t)})")]
       end;
   top.unifyProd =
     case top.otherType of
@@ -77,7 +77,7 @@ top::ExtType ::=
 {
   top.unifyErrors =
     \ l::Location Decorated Env ->
-      [err(l, s"unify is not defined for types ${showType(extType(top.givenQualifiers, top))}, ${showType(top.otherType)}")];
+      [err(l, s"Unification is not defined for types ${showType(extType(top.givenQualifiers, top))}, ${showType(top.otherType)}")];
   top.unifyProd = \ Expr Expr Expr l::Location -> errorExpr([], location=l);
 }
 
@@ -114,11 +114,11 @@ top::ExtType ::= sub::Type
       | extType(_, varType(otherSub)) ->
         if compatibleTypes(sub, otherSub, false, false)
         then decorate sub with {otherType = otherSub;}.unifyErrors(l, env)
-        else [err(l, s"unify variable types must match (got ${showType(sub)}, ${showType(otherSub)})")]
+        else [err(l, s"Unification variable types must match (got ${showType(sub)}, ${showType(otherSub)})")]
       | t ->
         if compatibleTypes(sub, t, false, false)
         then decorate sub with {otherType = t;}.unifyErrors(l, env)
-        else [err(l, s"unify variable and value types must match (got ${showType(sub)}, ${showType(t)})")]
+        else [err(l, s"Unification variable and value types must match (got ${showType(sub)}, ${showType(t)})")]
       end;
   top.unifyProd =
     case top.otherType of
@@ -138,13 +138,13 @@ top::ExtType ::= adtName::String adtDeclName::String refId::String
       | extType(_, adtExtType(otherAdtName, _, otherRefId)) ->
         if refId == otherRefId
         then []
-        else [err(l, s"unify datatypes must match (got datatype ${adtName}, datatype ${otherAdtName})")]
+        else [err(l, s"Unification datatypes must match (got datatype ${adtName}, datatype ${otherAdtName})")]
       | extType(_, varType(extType(_, adtExtType(otherAdtName, _, otherRefId)))) ->
         if refId == otherRefId
         then []
-        else [err(l, s"unify value and variable datatypes must match (got datatype ${adtName}, datatype ${otherAdtName})")]
+        else [err(l, s"Unification value and variable datatypes must match (got datatype ${adtName}, datatype ${otherAdtName})")]
       | errorType() -> []
-      | t -> [err(l, s"unify is not defined for datatype ${adtName} and non-datatype ${showType(t)}")]
+      | t -> [err(l, s"Unification is not defined for datatype ${adtName} and non-datatype ${showType(t)}")]
       end ++
       case lookupRefId(refId, env) of
       | adtRefIdItem(adt) :: _ -> adt.unifyErrors(l, env)
