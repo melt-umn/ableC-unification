@@ -97,6 +97,8 @@ top::ExtType ::= sub::Type
           "_var_d",
           templateMangledName("_var_d", [sub]),
           templateMangledRefId("_var_d", [sub]))).host);
+  top.baseTypeExpr = directTypeExpr(sub);
+  top.typeModifierExpr = varTypeExpr(top.givenQualifiers, baseTypeExpr(), builtin);
   top.mangledName = s"var_${sub.mangledName}_";
   top.isEqualTo =
     \ other::ExtType ->
