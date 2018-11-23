@@ -16,6 +16,8 @@ top::Expr ::= e1::Expr e2::Expr trail::MaybeExpr
       }
     end;
   
+  e2.env = addEnv(e1.defs, e1.env);
+  
   local type::Type = e1.typerep;
   type.otherType = e2.typerep;
   
