@@ -45,12 +45,18 @@ a value(a ?var) {
 
 template<a>
 string show_var(a ?var) {
-  if (inst is_bound<a>(var)) {
-    return "?&" + show(inst value<a>(var));
-  } else {
-    char buffer[24];
-    sprintf(buffer, "<var %x>", (union {a ?v; unsigned n;}){.v = var}.n);
-    return str(buffer);
+  match ((inst _var_d<a> *)var) {
+    &_Free() -> {
+      char buffer[24];
+      sprintf(buffer, "<var %x>", (union {a ?v; unsigned n;}){.v = var}.n);
+      return str(buffer);
+    }
+    &_Bound(val) -> {
+      return show(val);
+    }
+    &_BoundVar(other_var) -> {
+      return inst show_var<a>(other_var);
+    }
   }
 }
 
