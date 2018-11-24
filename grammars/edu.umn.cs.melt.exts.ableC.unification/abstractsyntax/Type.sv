@@ -84,7 +84,7 @@ top::ExtType ::=
 abstract production varType
 top::ExtType ::= sub::Type
 {
-  propagate substituted;
+  propagate substituted, canonicalType;
   top.lpp = sub.lpp;
   top.rpp = pp"?${terminate(space(), top.givenQualifiers.pps)}${sub.rpp}";
   top.pp = error("TODO");
