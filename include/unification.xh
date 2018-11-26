@@ -45,17 +45,14 @@ a value(a ?var) {
 
 template<a>
 string show_var(a ?var) {
-  match ((inst _var_d<a> *)var) {
-    &_Free() -> {
+  match (var) {
+    freevar -> {
       char buffer[24];
       sprintf(buffer, "<var %x>", (union {a ?v; unsigned n;}){.v = var}.n);
       return str(buffer);
     }
-    &_Bound(val) -> {
+    ?&val -> {
       return show(val);
-    }
-    &_BoundVar(other_var) -> {
-      return inst show_var<a>(other_var);
     }
   }
 }
