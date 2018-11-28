@@ -25,7 +25,7 @@ int main() {
     return 1;
   }
 
-  undo_trail(trail);
+  undo_trail(trail, 0);
   printf("%s\n", show(a).text);
   printf("%s\n", show(b).text);
 }

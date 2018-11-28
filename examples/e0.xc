@@ -24,7 +24,7 @@ int main() {
   printf("unify 4: %d\n", res4);
   printf("%s %d %d\n", show(c).text, inst is_bound<int>(c), inst is_bound<int>(c)? inst value<int>(c) : -1);
   
-  undo_trail(trail);
+  undo_trail(trail, 0);
   printf("%s %d %d\n", show(c).text, inst is_bound<int>(c), inst is_bound<int>(c)? inst value<int>(c) : -1);
   
   bool res5 = unify(c, 7);

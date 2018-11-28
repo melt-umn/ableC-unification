@@ -26,7 +26,12 @@ top::Expr ::= e1::Expr e2::Expr trail::MaybeExpr
     type.unifyErrors(top.location, top.env) ++
     checkUnificationHeaderDef("unification_trail", top.location, top.env);
   
-  local fwrd::Expr = type.unifyProd(e1, e2, trailExpr, top.location);
+  local fwrd::Expr =
+    type.unifyProd(
+      decExpr(e1, location=e1.location),
+      decExpr(e2, location=e2.location),
+      trailExpr,
+      top.location);
   
   forwards to mkErrorCheck(localErrors, fwrd);
 }
