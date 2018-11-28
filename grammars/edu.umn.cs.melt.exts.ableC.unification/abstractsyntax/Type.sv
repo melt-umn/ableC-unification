@@ -130,6 +130,29 @@ top::ExtType ::= sub::Type
     end;
 }
 
+aspect production stringType
+top::ExtType ::=
+{
+  top.unifyErrors =
+    \ l::Location env::Decorated Env ->
+      case top.otherType of
+      | extType(_, varType(sub)) ->
+        if compatibleTypes(extType(nilQualifier(), stringType()), sub, false, true)
+        then []
+        else [err(l, s"Unification value and variable types must match (got string, ${showType(sub)})")]
+      | t ->
+        if compatibleTypes(extType(nilQualifier(), stringType()), t, false, true)
+        then []
+        else [err(l, s"Unification value types must match (got string, ${showType(t)})")]
+      end;
+  top.unifyProd =
+    case top.otherType of
+    | extType(_, varType(_)) -> valVarUnifyExpr(_, _, _, location=_)
+    | errorType() -> \ Expr Expr Expr l::Location -> errorExpr([], location=l)
+    | _ -> defaultUnifyExpr(_, _, _, location=_)
+    end;
+}
+
 aspect production adtExtType
 top::ExtType ::= adtName::String adtDeclName::String refId::String
 {

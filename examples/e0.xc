@@ -32,4 +32,9 @@ int main() {
   printf("%s %d %d\n", show(c).text, inst is_bound<int>(c), inst is_bound<int>(c)? inst value<int>(c) : -1);
 
   inst delete_var<int>(free, c);
+
+  string ?d = freevar<string>(alloca);
+  bool res6 = unify(d, str("hello"));
+  printf("unify 6: %d\n", res6);
+  printf("%s %d %s\n", show(c).text, inst is_bound<string>(d), inst is_bound<string>(d)? inst value<string>(d).text : "fail");
 }
