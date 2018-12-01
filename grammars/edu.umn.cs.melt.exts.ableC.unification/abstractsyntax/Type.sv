@@ -24,10 +24,9 @@ top::TypeModifierExpr ::= q::Qualifiers sub::TypeModifierExpr loc::Location
       else
         injectGlobalDeclsTypeExpr(
           foldDecl([
-            decls(foldDecl(sub.decls)),
             templateTypeExprInstDecl(
               q, name("_var_d", location=builtin),
-              consTypeName(typeName(sub.typerep.baseTypeExpr, sub.typerep.typeModifierExpr), nilTypeName()))]),
+              consTypeName(typeName(directTypeExpr(top.baseType), decTypeModifierExpr(sub)), nilTypeName()))]),
           extTypeExpr(q, varType(sub.typerep))));
 }
 
