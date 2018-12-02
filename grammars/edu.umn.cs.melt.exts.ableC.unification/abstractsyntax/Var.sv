@@ -18,7 +18,7 @@ top::Expr ::= ty::TypeName allocator::Expr
   
   local localErrors::[Message] =
     ty.errors ++ allocator.errors ++
-    (if !ty.typerep.isCompleteType(top.env)
+    (if !ty.typerep.isCompleteType(addEnv(ty.defs, ty.env))
      then [err(top.location, s"var type parameter has incomplete type ${showType(ty.typerep)}")]
      else []) ++
     (if !compatibleTypes(expectedAllocatorType, allocator.typerep, true, false)

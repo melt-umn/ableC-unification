@@ -23,15 +23,12 @@ top::Expr ::= e1::Expr e2::Expr trail::MaybeExpr
   
   local localErrors::[Message] =
     e1.errors ++ e2.errors ++ trail.errors ++
-    type.unifyErrors(top.location, top.env) ++
+    type.unifyErrors(top.location, addEnv(e2.defs, e2.env)) ++
     checkUnificationHeaderDef("unification_trail", top.location, top.env);
   
-  local fwrd::Expr =
-    type.unifyProd(
-      decExpr(e1, location=e1.location),
-      decExpr(e2, location=e2.location),
-      trailExpr,
-      top.location);
+  -- Can't use decExpr wrappers here since e1, e2 may recieve an environemnt containing more defs
+  -- in the forward.
+  local fwrd::Expr = type.unifyProd(e1, e2, trailExpr, top.location);
   
   forwards to mkErrorCheck(localErrors, fwrd);
 }

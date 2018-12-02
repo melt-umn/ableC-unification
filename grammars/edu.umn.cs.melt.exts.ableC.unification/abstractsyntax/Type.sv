@@ -15,8 +15,6 @@ top::TypeModifierExpr ::= q::Qualifiers sub::TypeModifierExpr loc::Location
   local localErrors::[Message] =
     sub.errors ++ checkUnificationHeaderTemplateDef("_var_d", loc, top.env);
   
-  local mangledName::String = templateMangledName("_var_d", [sub.typerep]);
-  
   forwards to
     modifiedTypeExpr(
       if !null(localErrors)
@@ -26,7 +24,9 @@ top::TypeModifierExpr ::= q::Qualifiers sub::TypeModifierExpr loc::Location
           foldDecl([
             templateTypeExprInstDecl(
               q, name("_var_d", location=builtin),
-              consTypeName(typeName(directTypeExpr(top.baseType), decTypeModifierExpr(sub)), nilTypeName()))]),
+              consTypeName(
+                typeName(directTypeExpr(top.baseType), decTypeModifierExpr(sub)),
+                nilTypeName()))]),
           extTypeExpr(q, varType(sub.typerep))));
 }
 
@@ -96,8 +96,8 @@ top::ExtType ::= sub::Type
           "_var_d",
           templateMangledName("_var_d", [sub]),
           templateMangledRefId("_var_d", [sub]))).host);
-  top.baseTypeExpr = directTypeExpr(sub);
-  top.typeModifierExpr = varTypeExpr(top.givenQualifiers, baseTypeExpr(), builtin);
+  top.baseTypeExpr = sub.baseTypeExpr;
+  top.typeModifierExpr = varTypeExpr(top.givenQualifiers, sub.typeModifierExpr, builtin);
   top.mangledName = s"var_${sub.mangledName}_";
   top.isEqualTo =
     \ other::ExtType ->
