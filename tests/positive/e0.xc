@@ -48,7 +48,7 @@ int main() {
   if (inst value<int>(c) != 5)
     return 12;
   
-  undo_trail(trail);
+  undo_trail(trail, 0);
   printf("%s %d %d\n", show(c).text, inst is_bound<int>(c), inst is_bound<int>(c)? inst value<int>(c) : -1);
   if (inst is_bound<int>(c))
     return 13;
