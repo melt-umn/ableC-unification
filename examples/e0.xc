@@ -37,4 +37,7 @@ int main() {
   bool res6 = unify(d, str("hello"));
   printf("unify 6: %d\n", res6);
   printf("%s %d %s\n", show(c).text, inst is_bound<string>(d), inst is_bound<string>(d)? inst value<string>(d).text : "fail");
+
+  int ?e = boundvar(42, alloca);
+  printf("%s %d %d\n", show(e).text, inst is_bound<int>(e), inst is_bound<int>(e)? inst value<int>(e) : -1);
 }

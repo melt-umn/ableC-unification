@@ -63,5 +63,12 @@ int main() {
   if (inst value<int>(c) != 7)
     return 16;
 
+  int ?e = boundvar(42, alloca);
+  printf("%s %d %d\n", show(e).text, inst is_bound<int>(e), inst is_bound<int>(e)? inst value<int>(e) : -1);
+  if (!inst is_bound<int>(e))
+    return 17;
+  if (inst value<int>(e) != 42)
+    return 18;
+
   inst delete_var<int>(free, c);
 }

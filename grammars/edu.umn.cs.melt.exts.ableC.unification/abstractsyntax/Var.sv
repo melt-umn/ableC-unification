@@ -41,6 +41,42 @@ top::Expr ::= ty::TypeName allocator::Expr
   forwards to mkErrorCheck(localErrors, fwrd);
 }
 
+abstract production boundVarExpr
+top::Expr ::= e::Expr allocator::Expr
+{
+  propagate substituted;
+  top.pp = pp"boundvar(${e.pp}, ${allocator.pp})";
+  
+  local expectedAllocatorType::Type =
+    functionType(
+      pointerType(
+        nilQualifier(),
+        builtinType(nilQualifier(), voidType())),
+      protoFunctionType([builtinType(nilQualifier(), unsignedType(longType()))], false),
+      nilQualifier());
+  
+  local localErrors::[Message] =
+    e.errors ++ allocator.errors ++
+    (if !compatibleTypes(expectedAllocatorType, allocator.typerep, true, false)
+     then [err(allocator.location, s"Allocator must have type void *(unsigned long) (got ${showType(allocator.typerep)})")]
+     else []) ++
+    checkUnificationHeaderTemplateDef("_var_d", top.location, top.env);
+  
+  local fwrd::Expr =
+    ableC_Expr {
+      proto_typedef _var_d;
+      ({inst _var_d<$directTypeExpr{e.typerep}> *_result =
+          $Expr{allocator}(sizeof(inst _var_d<$directTypeExpr{e.typerep}>));
+        *_result = inst _Bound<$directTypeExpr{e.typerep}>($Expr{e});
+        ($TypeName{
+           typeName(
+             directTypeExpr(e.typerep),
+             varTypeExpr(nilQualifier(), baseTypeExpr(), builtin))})_result;})
+    };
+  
+  forwards to mkErrorCheck(localErrors, fwrd);
+}
+
 abstract production showVar
 top::Expr ::= e::Expr
 {
