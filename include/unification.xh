@@ -63,10 +63,9 @@ static inline unification_trail new_trail(void) {
   return new unification_trail(0, NULL, malloc, realloc, free);
 }
 
-static void undo_trail(unification_trail trail, size_t index) {
-  trail.length;
+static inline void undo_trail(unification_trail trail, size_t index) {
   for (size_t i = index; i < trail.length; i++) {
-   *trail[i] = _var_d__Free;
+    *trail[i] = _var_d__Free;
   }
   inst resize_vector<enum _var_d_tag *>(trail, index);
 }
