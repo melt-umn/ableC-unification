@@ -1,4 +1,11 @@
-grammar edu:umn:cs:melt:exts:ableC:unification:concretesyntax;
+grammar edu:umn:cs:melt:exts:ableC:unification:concretesyntax:patternmatching;
+
+imports edu:umn:cs:melt:ableC:concretesyntax;
+imports silver:langutil;
+
+imports edu:umn:cs:melt:exts:ableC:unification:abstractsyntax;
+
+imports edu:umn:cs:melt:exts:ableC:algebraicDataTypes:patternmatching:concretesyntax;
 
 marking terminal PatternFreeVar_t 'freevar' lexer classes {Ckeyword};
 marking terminal VarRefOp_t '?&' precedence = 1, lexer classes {Csymbol};
