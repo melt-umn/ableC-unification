@@ -19,10 +19,10 @@ copper_mda testAllocation(ablecParser) {
 -- Since unification is an extension (E2) to a nonterminal introduced by another
 -- extension (E1), we must perform the MDA with respect to a "host" language
 -- containing the syntax being extended (H + E1).
--- TODO: Technicallly we should also be testing the composed (E1 + E2) against
--- H, but that isn't currently possible because E2's bridge productions are
--- don't appear as such in (E1 + E2), resulting in marking terminals on non-
--- bridge productions.
+-- TODO: Technically we should also be testing the composed (E1 + E2) against H,
+-- but that isn't currently possible because E2's bridge productions don't
+-- appear as such in (E1 + E2), resulting in marking terminals on non-bridge
+-- productions.
 parser ableCWithPatternMatching :: Root {
   edu:umn:cs:melt:ableC:concretesyntax;
   edu:umn:cs:melt:exts:ableC:algebraicDataTypes:patternmatching:concretesyntax;
