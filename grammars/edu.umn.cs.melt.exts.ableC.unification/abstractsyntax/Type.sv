@@ -6,7 +6,7 @@ abstract production varTypeExpr
 top::TypeModifierExpr ::= q::Qualifiers sub::TypeModifierExpr loc::Location
 {
   propagate substituted;
-  top.lpp = pp"?${terminate(space(), q.pps)}${sub.lpp}";
+  top.lpp = pp" ? ${terminate(space(), q.pps)}${sub.lpp}";
   top.rpp = sub.rpp;
   top.isFunctionArrayTypeExpr = false;
   
@@ -85,7 +85,7 @@ top::ExtType ::= sub::Type
 {
   propagate substituted, canonicalType;
   top.lpp = sub.lpp;
-  top.rpp = pp"?${terminate(space(), top.givenQualifiers.pps)}${sub.rpp}";
+  top.rpp = pp" ? ${terminate(space(), top.givenQualifiers.pps)}${sub.rpp}";
   top.pp = error("TODO");
   top.host =
     pointerType(

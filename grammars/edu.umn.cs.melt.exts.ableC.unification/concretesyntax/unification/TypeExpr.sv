@@ -1,4 +1,4 @@
-grammar edu:umn:cs:melt:exts:ableC:unification:concretesyntax;
+grammar edu:umn:cs:melt:exts:ableC:unification:concretesyntax:unification;
 
 marking terminal VarType_t '?';
 

@@ -1,19 +1,11 @@
-grammar edu:umn:cs:melt:exts:ableC:unification:concretesyntax;
+grammar edu:umn:cs:melt:exts:ableC:unification:concretesyntax:unification;
 
 imports edu:umn:cs:melt:ableC:concretesyntax;
-imports silver:langutil; 
+imports silver:langutil;
 
 imports edu:umn:cs:melt:ableC:abstractsyntax:host;
 imports edu:umn:cs:melt:ableC:abstractsyntax:construction;
 imports edu:umn:cs:melt:exts:ableC:unification:abstractsyntax;
-
-exports edu:umn:cs:melt:exts:ableC:algebraicDataTypes:datatype:concretesyntax;
-exports edu:umn:cs:melt:exts:ableC:algebraicDataTypes:patternmatching:concretesyntax;
-exports edu:umn:cs:melt:exts:ableC:templating:concretesyntax;
-exports edu:umn:cs:melt:exts:ableC:templateAlgebraicDataTypes:datatype:concretesyntax;
-exports edu:umn:cs:melt:exts:ableC:string:concretesyntax;
-exports edu:umn:cs:melt:exts:ableC:vector:concretesyntax;
-exports edu:umn:cs:melt:exts:ableC:constructor:concretesyntax;
 
 marking terminal Unify_t 'unify' lexer classes {Ckeyword};
 

@@ -4,16 +4,16 @@
 
 template<a>
 datatype Tree {
-  Node(inst Tree<a> ?l, inst Tree<a> ?r);
+  Node(Tree<a> ?l, Tree<a> ?r);
   Leaf(a val);
 };
 
 template var_reference datatype Tree with alloca;
 
 int main() {
-  inst Tree<int> ?a = inst alloca_Node<int>(inst alloca_Leaf<int>(42), freevar<inst Tree<int>>(alloca));
+  Tree<int> ?a = alloca_Node<int>(alloca_Leaf<int>(42), freevar<Tree<int>>(alloca));
   printf("%s\n", show(a).text);
-  inst Tree<int> ?b = inst alloca_Node<int>(freevar<inst Tree<int>>(alloca), inst alloca_Node<int>(inst alloca_Leaf<int>(25), freevar<inst Tree<int>>(alloca)));
+  Tree<int> ?b = alloca_Node<int>(freevar<Tree<int>>(alloca), alloca_Node<int>(alloca_Leaf<int>(25), freevar<Tree<int>>(alloca)));
   printf("%s\n", show(b).text);
 
   unification_trail trail = new unification_trail();
