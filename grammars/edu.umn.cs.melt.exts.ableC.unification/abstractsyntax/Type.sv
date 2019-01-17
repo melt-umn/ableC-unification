@@ -21,12 +21,10 @@ top::TypeModifierExpr ::= q::Qualifiers sub::TypeModifierExpr loc::Location
       then errorTypeExpr(localErrors)
       else
         injectGlobalDeclsTypeExpr(
-          foldDecl([
-            templateTypeExprInstDecl(
-              q, name("_var_d", location=builtin),
-              consTypeName(
-                typeName(directTypeExpr(top.baseType), decTypeModifierExpr(sub)),
-                nilTypeName()))]),
+          foldDecl(
+            sub.decls ++
+            [templateTypeExprInstDecl(
+               q, name("_var_d", location=builtin), [sub.typerep])]),
           extTypeExpr(q, varType(sub.typerep))));
 }
 
