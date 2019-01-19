@@ -145,8 +145,8 @@ top::Constructor ::= n::Name ps::Parameters
   top.templateVarReferenceDefs =
     [templateDef(
        allocateConstructorName,
-       valueTemplateItem(
-         n.location, top.typeParameters.names, -- TODO: location should be allocate decl location
+       constructorTemplateItem(
+         n.location, top.typeParameters.names, ps, -- TODO: location should be allocate decl location
          templateVarReferenceConstructorInstDecl(
            name(top.adtGivenName, location=builtin),
            top.allocatorName, n, _, top.typeParameters.asTypeNames, ps)))];

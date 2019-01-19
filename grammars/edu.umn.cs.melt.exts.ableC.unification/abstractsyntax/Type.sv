@@ -10,6 +10,14 @@ top::TypeModifierExpr ::= q::Qualifiers sub::TypeModifierExpr loc::Location
   top.rpp = sub.rpp;
   top.isFunctionArrayTypeExpr = false;
   
+  top.inferredTypes = sub.inferredTypes;
+  top.argumentBaseType = sub.argumentBaseType;
+  sub.argumentType =
+    case top.argumentType of
+    | extType(_, varType(t)) -> t
+    | _ -> errorType()
+    end;
+  
   sub.env = globalEnv(top.env);
   
   local localErrors::[Message] =
