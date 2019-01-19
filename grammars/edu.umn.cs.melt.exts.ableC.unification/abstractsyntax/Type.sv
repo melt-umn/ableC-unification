@@ -15,7 +15,9 @@ top::TypeModifierExpr ::= q::Qualifiers sub::TypeModifierExpr loc::Location
   sub.argumentType =
     case top.argumentType of
     | extType(_, varType(t)) -> t
-    | _ -> errorType()
+    -- Be liberal here in case inferring where any unifiable type is permitted,
+    -- errors will be caught later.
+    | t -> t
     end;
   
   sub.env = globalEnv(top.env);
