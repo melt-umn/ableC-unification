@@ -4,5 +4,5 @@
 
 int main() {
   int ?a = freevar<int>(alloca);
-  inst value<int>(a);
+  value(a);
 }

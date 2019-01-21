@@ -24,7 +24,7 @@ _Bool is_bound(a ?var) {
   return match ((_var_d<a> *)var)
     (&_Free() -> 0;
      &_Bound(_) -> 1;
-     &_BoundVar(other_var) -> is_bound<a>(other_var););
+     &_BoundVar(other_var) -> is_bound(other_var););
 }
 
 template<a>
@@ -38,7 +38,7 @@ a value(a ?var) {
       return val;
     }
     &_BoundVar(other_var) -> {
-      return value<a>(other_var);
+      return value(other_var);
     }
   }
 }
@@ -67,14 +67,14 @@ static inline void undo_trail(unification_trail trail, size_t index) {
   for (size_t i = index; i < trail.length; i++) {
     *trail[i] = _var_d__Free;
   }
-  resize_vector<enum _var_d_tag *>(trail, index);
+  resize_vector(trail, index);
 }
 
 template<a>
 _Bool _unify_var_val(a ?var, a val, unification_trail trail) {
   match ((_var_d<a> *)var) {
     v@&_Free() -> {
-      *v = _Bound<a>(val);
+      *v = _Bound(val);
       if ((void*)trail) {
         trail.append(&v->tag);
       }
@@ -84,7 +84,7 @@ _Bool _unify_var_val(a ?var, a val, unification_trail trail) {
       return unify(other_val, val, trail);
     }
     &_BoundVar(other_var) -> {
-      return _unify_var_val<a>(other_var, val, trail);
+      return _unify_var_val(other_var, val, trail);
     }
   }
 }
@@ -94,7 +94,7 @@ _Bool _unify_var_var(a ?var1, a? var2, unification_trail trail) {
   match ((_var_d<a> *)var1, (_var_d<a> *)var2) {
     v1@&_Free(), v2@&_Free() -> {
       if (v1 != v2) {
-        *v1 = _BoundVar<a>(var2);
+        *v1 = _BoundVar(var2);
         if ((void*)trail) {
           trail.append(&v1->tag);
         }
@@ -102,13 +102,13 @@ _Bool _unify_var_var(a ?var1, a? var2, unification_trail trail) {
       return 1;
     }
     &_Free(), _ -> {
-      return _unify_var_var<a>(var2, var1, trail);
+      return _unify_var_var(var2, var1, trail);
     }
     &_Bound(other_val), _ -> {
-      return _unify_var_val<a>(var2, other_val, trail);
+      return _unify_var_val(var2, other_val, trail);
     }
     &_BoundVar(other_var), _ -> {
-      return _unify_var_var<a>(other_var, var2, trail);
+      return _unify_var_var(other_var, var2, trail);
     }
   }
 }

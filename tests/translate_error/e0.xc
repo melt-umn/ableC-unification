@@ -55,5 +55,5 @@ int main() {
   unify(e, f); // Same error, repeated
 
   struct bar ?g, h;
-    unify(g, h);
+  unify(g, h);
 }
