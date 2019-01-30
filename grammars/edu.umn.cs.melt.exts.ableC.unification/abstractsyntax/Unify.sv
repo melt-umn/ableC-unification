@@ -113,7 +113,7 @@ synthesized attribute unifyTransform<a>::a;
 attribute unifyTransform<Decls> occurs on ADTDecl;
 
 aspect production adtDecl
-top::ADTDecl ::= n::Name cs::ConstructorList
+top::ADTDecl ::= attrs::Attributes n::Name cs::ConstructorList
 {
   top.unifyErrors =
     \ l::Location env::Decorated Env ->
