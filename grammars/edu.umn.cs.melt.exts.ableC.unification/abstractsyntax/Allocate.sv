@@ -106,7 +106,7 @@ synthesized attribute templateVarReferenceDefs::[Def] occurs on ADTDecl, Constru
 synthesized attribute templateVarReferenceErrorDefs::[Def] occurs on ADTDecl, ConstructorList, Constructor;
 
 aspect production adtDecl
-top::ADTDecl ::= n::Name cs::ConstructorList
+top::ADTDecl ::= attrs::Attributes n::Name cs::ConstructorList
 {
   top.varReferenceDefs = cs.varReferenceDefs;
   top.varReferenceErrorDefs = cs.varReferenceErrorDefs;
