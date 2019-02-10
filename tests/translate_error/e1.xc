@@ -2,8 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+struct foo;
+
 int main() {
-  // TODO: Proper error handling for this case
-  struct bar { int x; } ?a, b;
+  struct foo ?a, ?b;
   unify(a, b);
+  struct bar { int x; } ?c, d;
+  unify(c, d);
 }

@@ -23,7 +23,8 @@ top::TypeModifierExpr ::= q::Qualifiers sub::TypeModifierExpr loc::Location
   sub.env = globalEnv(top.env);
   
   local localErrors::[Message] =
-    sub.errors ++ checkUnificationHeaderTemplateDef("_var_d", loc, top.env);
+    sub.errors ++
+    checkUnificationHeaderTemplateDef("_var_d", loc, top.env);
   
   forwards to
     modifiedTypeExpr(
@@ -160,6 +161,62 @@ top::ExtType ::=
     end;
 }
 
+aspect production enumExtType
+top::ExtType ::= ref::Decorated EnumDecl
+{
+  local topType::Type = extType(top.givenQualifiers, top);
+  top.unifyErrors =
+    \ l::Location env::Decorated Env ->
+      case top.otherType of
+      | extType(_, varType(sub)) ->
+        if compatibleTypes(topType, sub, false, false)
+        then []
+        else [err(l, s"Unification value and variable types must match (got ${showType(topType)}, ${showType(sub)})")]
+      | t ->
+        if compatibleTypes(topType, t, false, false)
+        then []
+        else [err(l, s"Unification value types must match (got ${showType(topType)}, ${showType(t)})")]
+      end;
+  top.unifyProd =
+    case top.otherType of
+    | extType(_, varType(_)) -> valVarUnifyExpr(_, _, _, location=_)
+    | errorType() -> \ Expr Expr Expr l::Location -> errorExpr([], location=l)
+    | _ -> defaultUnifyExpr(_, _, _, location=_)
+    end;
+}
+
+aspect production refIdExtType
+top::ExtType ::= kwd::StructOrEnumOrUnion  n::String  refId::String
+{
+  local topType::Type = extType(top.givenQualifiers, top);
+  top.unifyErrors =
+    \ l::Location env::Decorated Env ->
+      case kwd, top.otherType of
+      | structSEU(), extType(_, refIdExtType(structSEU(), otherName, otherRefId)) ->
+        if refId == otherRefId
+        then []
+        else [err(l, s"Unification struct types must match (got struct ${n}, struct ${otherName})")]
+      | structSEU(), extType(_, varType(extType(_, refIdExtType(structSEU(), otherName, otherRefId)))) ->
+        if refId == otherRefId
+        then []
+        else [err(l, s"Unification value and variable struct types must match (got struct ${n}, datatype ${otherName})")]
+      | structSEU(), errorType() -> []
+      | structSEU(), t -> [err(l, s"Unification is not defined for struct ${n} and non-struct ${showType(t)}")]
+      | unionSEU(), _ -> [err(l, s"Unification is not defined for unions")]
+      | enumSEU(), _ -> error("Unexpected enum refIdExtType")
+      end ++
+      case lookupRefId(refId, globalEnv(env)) of
+      | structRefIdItem(struct) :: _ -> struct.unifyErrors(l, env)
+      | _ -> [err(l, s"struct ${n} does not have a (global) definition.")]
+      end;
+  top.unifyProd =
+    case top.otherType of
+    | extType(_, refIdExtType(_, _, _)) -> structUnifyExpr(_, _, _, location=_)
+    | extType(_, varType(_)) -> valVarUnifyExpr(_, _, _, location=_)
+    | errorType() -> \ Expr Expr Expr l::Location -> errorExpr([], location=l)
+    end;
+}
+
 aspect production adtExtType
 top::ExtType ::= adtName::String adtDeclName::String refId::String
 {
@@ -178,9 +235,9 @@ top::ExtType ::= adtName::String adtDeclName::String refId::String
       | errorType() -> []
       | t -> [err(l, s"Unification is not defined for datatype ${adtName} and non-datatype ${showType(t)}")]
       end ++
-      case lookupRefId(refId, env) of
+      case lookupRefId(refId, globalEnv(env)) of
       | adtRefIdItem(adt) :: _ -> adt.unifyErrors(l, env)
-      | _ -> [err(l, s"datatype ${adtName} does not have a definition.")]
+      | _ -> [err(l, s"datatype ${adtName} does not have a (global) definition.")]
       end;
   top.unifyProd =
     case top.otherType of

@@ -81,6 +81,176 @@ top::Expr ::= e1::Expr e2::Expr trail::Expr
     };
 }
 
+synthesized attribute unifyFnName::String;
+synthesized attribute unifyTransform<a>::a;
+
+abstract production structUnifyExpr
+top::Expr ::= e1::Expr e2::Expr trail::Expr
+{
+  propagate substituted;
+  top.pp = pp"unifyStruct(${e1.pp}, ${e2.pp}, ${trail.pp})";
+  
+  local structLookup::[RefIdItem] =
+    case e1.typerep.maybeRefId of
+    | just(rid) -> lookupRefId(rid, top.env)
+    | nothing() -> []
+    end;
+  
+  local struct::Decorated StructDecl =
+    case structLookup of
+    | structRefIdItem(struct) :: _ -> struct
+    end;
+  
+  forwards to
+    injectGlobalDeclsExpr(
+      foldDecl([maybeValueDecl(struct.unifyFnName, decls(struct.unifyTransform))]),
+      ableC_Expr {
+        $name{struct.unifyFnName}($Expr{e1}, $Expr{e2}, $Expr{trail})
+      },
+      location=builtin);
+}
+
+attribute unifyErrors occurs on StructDecl, StructItemList, StructItem, StructDeclarators, StructDeclarator;
+attribute unifyFnName occurs on StructDecl;
+attribute unifyTransform<Decls> occurs on StructDecl;
+
+aspect production structDecl
+top::StructDecl ::= attrs::Attributes  name::MaybeName  dcls::StructItemList
+{
+  local n::String = name.maybename.fromJust.name;
+  top.unifyErrors =
+    \ l::Location env::Decorated Env ->
+      if !name.maybename.isJust
+      then [err(l, "Cannot unify anonymous struct")]
+      else if null(lookupValue(top.unifyFnName, env))
+      then
+        case dcls.unifyErrors(top.location, addEnv([valueDef(top.unifyFnName, errorValueItem())], env)) of
+        | [] -> []
+        | m -> [nested(l, s"In unification of struct ${n}", m)]
+        end
+      else [];
+  top.unifyFnName = "_unify_" ++ n;
+  top.unifyTransform =
+    ableC_Decls {
+      proto_typedef unification_trail;
+      static _Bool $name{top.unifyFnName}(
+        struct $name{n} s1,
+        struct $name{n} s2,
+        unification_trail trail);
+      static _Bool $name{top.unifyFnName}(
+        struct $name{n} s1,
+        struct $name{n} s2,
+        unification_trail trail) {
+        return $Expr{dcls.unifyTransform};
+      }
+    };
+}
+
+attribute unifyTransform<Expr> occurs on StructItemList, StructItem, StructDeclarators, StructDeclarator;
+
+aspect production consStructItem
+top::StructItemList ::= h::StructItem  t::StructItemList
+{
+  top.unifyErrors =
+    \ l::Location env::Decorated Env -> h.unifyErrors(l, env) ++ t.unifyErrors(l, env);
+  top.unifyTransform =
+    andExpr(h.unifyTransform, t.unifyTransform, location=builtin);
+}
+aspect production nilStructItem
+top::StructItemList ::=
+{
+  top.unifyErrors = \ l::Location env::Decorated Env -> [];
+  top.unifyTransform = mkIntConst(1, builtin);
+}
+
+aspect production structItem
+top::StructItem ::= attrs::Attributes  ty::BaseTypeExpr  dcls::StructDeclarators
+{
+  top.unifyErrors = dcls.unifyErrors;
+  top.unifyTransform = dcls.unifyTransform;
+}
+aspect production structItems
+top::StructItem ::= dcls::StructItemList
+{
+  top.unifyErrors = dcls.unifyErrors;
+  top.unifyTransform = dcls.unifyTransform;
+}
+aspect production anonStructStructItem
+top::StructItem ::= d::StructDecl
+{
+  -- TODO?
+  top.unifyErrors =
+    \ l::Location env::Decorated Env ->
+      [err(d.location, "Unification is not yet supported for anonymous structs")];
+  top.unifyTransform = error("Undefined, should have raised an error");
+}
+aspect production anonUnionStructItem
+top::StructItem ::= d::UnionDecl
+{
+  top.unifyErrors =
+    \ l::Location env::Decorated Env ->
+      [err(d.location, "Unification is not defined for unions")];
+  top.unifyTransform = error("Undefined, should have raised an error");
+}
+aspect production warnStructItem
+top::StructItem ::= msg::[Message]
+{
+  top.unifyErrors = \ l::Location env::Decorated Env -> [];
+  top.unifyTransform = mkIntConst(1, builtin);
+}
+
+aspect production consStructDeclarator
+top::StructDeclarators ::= h::StructDeclarator  t::StructDeclarators
+{
+  top.unifyErrors =
+    \ l::Location env::Decorated Env -> h.unifyErrors(l, env) ++ t.unifyErrors(l, env);
+  top.unifyTransform =
+    andExpr(h.unifyTransform, t.unifyTransform, location=builtin);
+}
+aspect production nilStructDeclarator
+top::StructDeclarators ::=
+{
+  top.unifyErrors = \ l::Location env::Decorated Env -> [];
+  top.unifyTransform = mkIntConst(1, builtin);
+}
+
+aspect production structField
+top::StructDeclarator ::= name::Name  ty::TypeModifierExpr  attrs::Attributes
+{
+  local type::Type = top.typerep;
+  type.otherType = type;
+  top.unifyErrors = \ Location env::Decorated Env -> type.unifyErrors(top.sourceLocation, env);
+  top.unifyTransform =
+    unifyExpr(
+      ableC_Expr { s1.$Name{name} },
+      ableC_Expr { s2.$Name{name} },
+      justExpr(ableC_Expr { trail }),
+      location=builtin);
+}
+aspect production structBitfield
+top::StructDeclarator ::= name::MaybeName  ty::TypeModifierExpr  e::Expr  attrs::Attributes
+{
+  local type::Type = top.typerep;
+  type.otherType = type;
+  top.unifyErrors = \ Location env::Decorated Env -> type.unifyErrors(top.sourceLocation, env);
+  top.unifyTransform =
+    case name of
+    | justName(n) ->
+      unifyExpr(
+        ableC_Expr { s1.$Name{n} },
+        ableC_Expr { s2.$Name{n} },
+        justExpr(ableC_Expr { trail }),
+        location=builtin)
+    | nothingName() -> mkIntConst(1, builtin) -- Ignore anonymous padding bits
+    end;
+}
+aspect production warnStructField
+top::StructDeclarator ::= msg::[Message]
+{
+  top.unifyErrors = \ Location env::Decorated Env -> [];
+  top.unifyTransform = mkIntConst(1, builtin);
+}
+
 abstract production adtUnifyExpr
 top::Expr ::= e1::Expr e2::Expr trail::Expr
 {
@@ -108,8 +278,7 @@ top::Expr ::= e1::Expr e2::Expr trail::Expr
 }
 
 attribute unifyErrors occurs on ADTDecl, ConstructorList, Constructor, Parameters, ParameterDecl;
-synthesized attribute unifyFnName::String occurs on ADTDecl;
-synthesized attribute unifyTransform<a>::a;
+attribute unifyFnName occurs on ADTDecl;
 attribute unifyTransform<Decls> occurs on ADTDecl;
 
 aspect production adtDecl
