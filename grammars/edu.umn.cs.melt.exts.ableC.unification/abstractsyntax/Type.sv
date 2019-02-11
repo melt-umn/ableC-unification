@@ -26,17 +26,20 @@ top::TypeModifierExpr ::= q::Qualifiers sub::TypeModifierExpr loc::Location
     sub.errors ++
     checkUnificationHeaderTemplateDef("_var_d", loc, top.env);
   
+  local globalDecls::Decls =
+    foldDecl(
+      sub.decls ++
+      [templateTypeExprInstDecl(q, name("_var_d", location=builtin), [sub.typerep])]);
+  
+  -- Non-interfering overrides for better performance
+  top.decls = [injectGlobalDeclsDecl(globalDecls)];
+  top.typerep = extType(q, varType(sub.typerep));
+  
   forwards to
     modifiedTypeExpr(
       if !null(localErrors)
       then errorTypeExpr(localErrors)
-      else
-        injectGlobalDeclsTypeExpr(
-          foldDecl(
-            sub.decls ++
-            [templateTypeExprInstDecl(
-               q, name("_var_d", location=builtin), [sub.typerep])]),
-          extTypeExpr(q, varType(sub.typerep))));
+      else injectGlobalDeclsTypeExpr(globalDecls, extTypeExpr(q, varType(sub.typerep))));
 }
 
 synthesized attribute unifyErrors::([Message] ::= Location Decorated Env) occurs on Type, ExtType;
