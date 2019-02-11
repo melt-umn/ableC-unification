@@ -17,7 +17,10 @@ top::Pattern ::=
   local subType::Type = varSubType(top.expectedType.withoutAttributes);
     
   top.transform =
-    ableC_Expr { !inst is_bound<$directTypeExpr{subType}>($Expr{top.transformIn}) };
+    ableC_Expr {
+      ({template<a> _Bool is_bound();
+        !is_bound($Expr{top.transformIn});})
+    };
 }
 
 abstract production boundVarPattern
@@ -43,9 +46,10 @@ top::Pattern ::= p::Pattern
   p.transformIn = declRefExpr(name(tempName, location=builtin), location=builtin);
   top.transform =
     ableC_Expr {
-      inst is_bound<$directTypeExpr{subType}>($Expr{top.transformIn}) &&
-      ({$directTypeExpr{subType} $name{tempName} =
-          inst value<$directTypeExpr{subType}>($Expr{top.transformIn});
-        $Expr{p.transform};})
+      ({template<a> _Bool is_bound();
+        template<a> _Bool value();
+        is_bound($Expr{top.transformIn}) &&
+        ({$directTypeExpr{subType} $name{tempName} = value($Expr{top.transformIn});
+          $Expr{p.transform};});})
     };
 }

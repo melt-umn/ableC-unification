@@ -33,11 +33,16 @@ top::TypeModifierExpr ::= q::Qualifiers sub::TypeModifierExpr loc::Location
   
   -- Non-interfering overrides for better performance
   top.decls = [injectGlobalDeclsDecl(globalDecls)];
-  top.typerep = extType(q, varType(sub.typerep));
+  top.errors := localErrors;
+  top.typerep =
+    case sub.typerep of
+    | errorType() -> errorType()
+    | _ -> extType(q, varType(sub.typerep))
+    end;
   
   forwards to
     modifiedTypeExpr(
-      if !null(localErrors)
+      if !null(localErrors) || case sub.typerep of errorType() -> true | _ -> false end
       then errorTypeExpr(localErrors)
       else injectGlobalDeclsTypeExpr(globalDecls, extTypeExpr(q, varType(sub.typerep))));
 }

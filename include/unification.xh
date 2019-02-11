@@ -31,7 +31,7 @@ template<a>
 a value(a ?var) {
   match ((_var_d<a> *)var) {
     &_Free() -> {
-      fprintf(stderr, "Error: Cannot access value of free variable %s\n", show(var).text);
+      fprintf(stderr, "Error: Cannot access value of free variable\n");
       exit(1);
     }
     &_Bound(val) -> {
