@@ -76,22 +76,3 @@ top::Expr ::= e::Expr allocator::Expr
   
   forwards to mkErrorCheck(localErrors, fwrd);
 }
-
-abstract production showVar
-top::Expr ::= e::Expr
-{
-  propagate substituted;
-  top.pp = pp"show(${e.pp})";
-  
-  local subType::Type = varSubType(e.typerep);
-  local localErrors::[Message] =
-    (if !subType.isCompleteType(top.env)
-     then [err(top.location, s"var type parameter has incomplete type ${showType(subType)}")]
-     else []) ++
-    checkUnificationHeaderTemplateDef("show_var", top.location, top.env);
-  
-  local fwrd::Expr =
-    ableC_Expr { inst show_var<$directTypeExpr{subType}>($Expr{e}) };
-  
-  forwards to mkErrorCheck(localErrors, fwrd);
-}

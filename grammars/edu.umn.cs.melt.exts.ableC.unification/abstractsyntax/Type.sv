@@ -123,7 +123,12 @@ top::ExtType ::= sub::Type
       | _ -> false
       end;
   
-  top.showProd = just(showVar(_, location=_));
+  top.showErrors =
+    \ l::Location env::Decorated Env ->
+      sub.showErrors(l, env) ++
+      checkUnificationHeaderTemplateDef("show_var", l, env);
+  top.showProd =
+    \ e::Expr -> ableC_Expr { inst show_var<$directTypeExpr{sub}>($Expr{e}) };
   
   local topType::Type = extType(top.givenQualifiers, top);
   top.unifyErrors =

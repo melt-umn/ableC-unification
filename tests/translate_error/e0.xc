@@ -15,11 +15,11 @@ datatype Foo {
   B(datatype Bar ?b);
 };
 
+struct bar { int x; };
+
 datatype Bar {
   B1(struct bar ?b);
 };
-
-struct bar { int x; };
 
 int main() {
   datatype Tree ?a = alloca_Node(alloca_Leaf(42), freevar<datatype Tree>(alloca));
