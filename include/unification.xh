@@ -7,19 +7,19 @@
 #ifndef _UNIFICATION_XH
 #define _UNIFICATION_XH
 
-template<a>
+template<typename a>
 datatype _var_d {
   _Free();
   _Bound(a val);
   _BoundVar(a ?var);
 };
 
-template<a>
+template<typename a>
 void delete_var(void (*dealloc)(void *), a ?var) {
   dealloc((_var_d<a> *)var);
 }
 
-template<a>
+template<typename a>
 _Bool is_bound(a ?var) {
   return match ((_var_d<a> *)var)
     (&_Free() -> 0;
@@ -27,7 +27,7 @@ _Bool is_bound(a ?var) {
      &_BoundVar(other_var) -> is_bound(other_var););
 }
 
-template<a>
+template<typename a>
 a value(a ?var) {
   match ((_var_d<a> *)var) {
     &_Free() -> {
@@ -43,7 +43,7 @@ a value(a ?var) {
   }
 }
 
-template<a>
+template<typename a>
 string show_var(a ?var) {
   match (var) {
     freevar -> {
@@ -70,7 +70,7 @@ static inline void undo_trail(unification_trail trail, size_t index) {
   resize_vector(trail, index);
 }
 
-template<a>
+template<typename a>
 _Bool _unify_var_val(a ?var, a val, unification_trail trail) {
   match ((_var_d<a> *)var) {
     v@&_Free() -> {
@@ -89,7 +89,7 @@ _Bool _unify_var_val(a ?var, a val, unification_trail trail) {
   }
 }
 
-template<a>
+template<typename a>
 _Bool _unify_var_var(a ?var1, a? var2, unification_trail trail) {
   match ((_var_d<a> *)var1, (_var_d<a> *)var2) {
     v1@&_Free(), v2@&_Free() -> {

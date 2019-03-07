@@ -10,7 +10,7 @@ top::TypeModifierExpr ::= q::Qualifiers sub::TypeModifierExpr loc::Location
   top.rpp = sub.rpp;
   top.isFunctionArrayTypeExpr = false;
   
-  top.inferredTypes = sub.inferredTypes;
+  top.inferredArgs = sub.inferredArgs;
   top.argumentBaseType = sub.argumentBaseType;
   sub.argumentType =
     case top.argumentType of
@@ -29,7 +29,9 @@ top::TypeModifierExpr ::= q::Qualifiers sub::TypeModifierExpr loc::Location
   local globalDecls::Decls =
     foldDecl(
       sub.decls ++
-      [templateTypeExprInstDecl(q, name("_var_d", location=builtin), [sub.typerep])]);
+      [templateTypeExprInstDecl(
+        q, name("_var_d", location=builtin),
+        foldTemplateArg([typeTemplateArg(sub.typerep)]))]);
   
   -- Non-interfering overrides for better performance
   top.decls = [injectGlobalDeclsDecl(globalDecls)];
@@ -111,8 +113,8 @@ top::ExtType ::= sub::Type
         nilQualifier(),
         adtExtType(
           "_var_d",
-          templateMangledName("_var_d", [sub]),
-          templateMangledRefId("_var_d", [sub]))).host);
+          templateMangledName("_var_d", foldTemplateArg([typeTemplateArg(sub)])),
+          templateMangledRefId("_var_d", foldTemplateArg([typeTemplateArg(sub)])))).host);
   top.baseTypeExpr = sub.baseTypeExpr;
   top.typeModifierExpr = varTypeExpr(top.givenQualifiers, sub.typeModifierExpr, builtin);
   top.mangledName = s"var_${sub.mangledName}_";

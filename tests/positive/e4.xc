@@ -1,6 +1,6 @@
 #include <unification.xh>
 
-template<a>
+template<typename a>
 struct list {
   a h;
   list<a> ?t;

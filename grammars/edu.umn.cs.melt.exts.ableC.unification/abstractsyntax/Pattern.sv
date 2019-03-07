@@ -19,7 +19,7 @@ top::Pattern ::=
   
   local isBound::Expr =
     ableC_Expr {
-      ({template<a> _Bool is_bound();
+      ({template<typename a> _Bool is_bound();
         !is_bound($Expr{top.transformIn});})
     };
   isBound.env = top.env;
@@ -50,7 +50,7 @@ top::Pattern ::= p::Pattern
   
   local isBound::Expr =
     ableC_Expr {
-      ({template<a> _Bool is_bound();
+      ({template<typename a> _Bool is_bound();
         is_bound($Expr{top.transformIn});})
     };
   isBound.env = top.env;
@@ -61,7 +61,7 @@ top::Pattern ::= p::Pattern
   local tempName::String = "_match_var_" ++ toString(genInt());
   local valueDecl::Stmt =
     ableC_Stmt {
-      template<a> a value();
+      template<typename a> a value();
       $directTypeExpr{subType} $name{tempName} = value($Expr{top.transformIn});
     };
   valueDecl.env = addEnv(isBound.defs, openScopeEnv(isBound.env));
