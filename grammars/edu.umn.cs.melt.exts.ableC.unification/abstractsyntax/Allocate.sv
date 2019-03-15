@@ -4,7 +4,7 @@ abstract production varReferenceDecl
 top::Decl ::= id::Name  allocator::Name
 {
   propagate substituted;
-  top.pp = pp"var reference datatype ${id.pp} with ${allocator.pp});";
+  top.pp = pp"var_reference datatype ${id.pp} with ${allocator.pp};";
   
   local expectedAllocatorType::Type =
     functionType(
@@ -56,7 +56,7 @@ abstract production templateVarReferenceDecl
 top::Decl ::= id::Name  allocator::Name
 {
   propagate substituted;
-  top.pp = pp"template var reference datatype ${id.pp} with ${allocator.pp});";
+  top.pp = pp"template var_reference datatype ${id.pp} with ${allocator.pp};";
   
   local expectedAllocatorType::Type =
     functionType(
