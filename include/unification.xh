@@ -57,6 +57,20 @@ string show_var(a ?var) {
   }
 }
 
+template<typename a>
+string str_var(a ?var) {
+  match (var) {
+    freevar -> {
+      char buffer[24];
+      sprintf(buffer, "<var %x>", (union {a ?v; unsigned n;}){.v = var}.n);
+      return str(buffer);
+    }
+    ?&val -> {
+      return str(val);
+    }
+  }
+}
+
 typedef vector<enum _var_d_tag *> unification_trail;
 
 static inline unification_trail new_trail(void) {

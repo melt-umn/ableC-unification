@@ -129,8 +129,14 @@ top::ExtType ::= sub::Type
     \ l::Location env::Decorated Env ->
       sub.showErrors(l, env) ++
       checkUnificationHeaderTemplateDef("show_var", l, env);
+  top.strErrors =
+    \ l::Location env::Decorated Env ->
+      sub.showErrors(l, env) ++
+      checkUnificationHeaderTemplateDef("str_var", l, env);
   top.showProd =
     \ e::Expr -> ableC_Expr { inst show_var<$directTypeExpr{sub}>($Expr{e}) };
+  top.strProd =
+    \ e::Expr -> ableC_Expr { inst str_var<$directTypeExpr{sub}>($Expr{e}) };
   
   local topType::Type = extType(top.givenQualifiers, top);
   top.unifyErrors =
