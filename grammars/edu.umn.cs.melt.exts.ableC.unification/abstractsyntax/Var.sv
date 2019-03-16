@@ -21,7 +21,7 @@ top::Expr ::= ty::TypeName allocator::Expr
     (if !ty.typerep.isCompleteType(addEnv(ty.defs, ty.env))
      then [err(top.location, s"var type parameter has incomplete type ${showType(ty.typerep)}")]
      else []) ++
-    (if !compatibleTypes(expectedAllocatorType, allocator.typerep, true, false)
+    (if !typeAssignableTo(expectedAllocatorType, allocator.typerep)
      then [err(allocator.location, s"Allocator must have type void *(unsigned long) (got ${showType(allocator.typerep)})")]
      else []) ++
     checkUnificationHeaderTemplateDef("_var_d", top.location, top.env);
@@ -57,7 +57,7 @@ top::Expr ::= e::Expr allocator::Expr
   
   local localErrors::[Message] =
     e.errors ++ allocator.errors ++
-    (if !compatibleTypes(expectedAllocatorType, allocator.typerep, true, false)
+    (if !typeAssignableTo(expectedAllocatorType, allocator.typerep)
      then [err(allocator.location, s"Allocator must have type void *(unsigned long) (got ${showType(allocator.typerep)})")]
      else []) ++
     checkUnificationHeaderTemplateDef("_var_d", top.location, top.env);
