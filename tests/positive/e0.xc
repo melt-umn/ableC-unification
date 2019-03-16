@@ -63,7 +63,7 @@ int main() {
   if (value(c) != 7)
     return 16;
 
-  int ?e = boundvar(42, alloca);
+  int ?e = boundvar(alloca, 42);
   printf("%s %d %d\n", show(e).text, is_bound(e), is_bound(e)? value(e) : -1);
   if (!is_bound(e))
     return 17;

@@ -42,10 +42,10 @@ top::Expr ::= ty::TypeName allocator::Expr
 }
 
 abstract production boundVarExpr
-top::Expr ::= e::Expr allocator::Expr
+top::Expr ::= allocator::Expr e::Expr
 {
   propagate substituted;
-  top.pp = pp"boundvar(${e.pp}, ${allocator.pp})";
+  top.pp = pp"boundvar(${allocator.pp}, ${e.pp})";
   
   local expectedAllocatorType::Type =
     functionType(
@@ -56,7 +56,7 @@ top::Expr ::= e::Expr allocator::Expr
       nilQualifier());
   
   local localErrors::[Message] =
-    e.errors ++ allocator.errors ++
+    allocator.errors ++ e.errors ++
     (if !typeAssignableTo(expectedAllocatorType, allocator.typerep)
      then [err(allocator.location, s"Allocator must have type void *(unsigned long) (got ${showType(allocator.typerep)})")]
      else []) ++
