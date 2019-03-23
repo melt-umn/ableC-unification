@@ -4,7 +4,7 @@ abstract production varReferenceDecl
 top::Decl ::= id::Name  allocator::Name
 {
   propagate substituted;
-  top.pp = pp"var reference datatype ${id.pp} with ${allocator.pp});";
+  top.pp = pp"var_reference datatype ${id.pp} with ${allocator.pp};";
   
   local expectedAllocatorType::Type =
     functionType(
@@ -56,7 +56,7 @@ abstract production templateVarReferenceDecl
 top::Decl ::= id::Name  allocator::Name
 {
   propagate substituted;
-  top.pp = pp"template var reference datatype ${id.pp} with ${allocator.pp});";
+  top.pp = pp"template var_reference datatype ${id.pp} with ${allocator.pp};";
   
   local expectedAllocatorType::Type =
     functionType(
@@ -85,7 +85,7 @@ top::Decl ::= id::Name  allocator::Name
   d.env = adtLookup.env;
   d.returnType = adtLookup.returnType;
   d.adtGivenName = adtLookup.adtGivenName;
-  d.typeParameters =
+  d.templateParameters =
     case lookupTemplate(id.name, top.env) of
     | adtTemplateItem(params, adt) :: _ -> params
     end;
@@ -146,10 +146,11 @@ top::Constructor ::= n::Name ps::Parameters
     [templateDef(
        allocateConstructorName,
        constructorTemplateItem(
-         n.location, top.typeParameters.names, ps, -- TODO: location should be allocate decl location
+         n.location,
+         top.templateParameters.names, top.templateParameters.kinds, ps, -- TODO: location should be allocate decl location
          templateVarReferenceConstructorInstDecl(
            name(top.adtGivenName, location=builtin),
-           top.allocatorName, n, _, top.typeParameters.asTypeNames, ps)))];
+           top.allocatorName, n, _, top.templateParameters.asTemplateArgNames, ps)))];
   top.templateVarReferenceErrorDefs = [templateDef(allocateConstructorName, errorTemplateItem())];
 }
 
@@ -196,7 +197,7 @@ top::Expr ::= adtName::Name allocatorName::Name constructorName::Name paramTypes
 }
 
 abstract production templateVarReferenceConstructorInstDecl
-top::Decl ::= adtName::Name allocatorName::Name constructorName::Name n::Name ts::TypeNames ps::Parameters
+top::Decl ::= adtName::Name allocatorName::Name constructorName::Name n::Name ts::TemplateArgNames ps::Parameters
 {
   propagate substituted;
   top.pp = pp"templateVarReferenceConstructorInstDecl ${n.pp};";
@@ -211,7 +212,7 @@ top::Decl ::= adtName::Name allocatorName::Name constructorName::Name n::Name ts
 }
 
 abstract production templateVarReferenceConstructorInstValueItem
-top::ValueItem ::= adtName::Name allocatorName::Name constructorName::Name ts::TypeNames paramTypes::[Type]
+top::ValueItem ::= adtName::Name allocatorName::Name constructorName::Name ts::TemplateArgNames paramTypes::[Type]
 {
   top.pp = pp"templateVarReferenceConstructorInstValueItem(${adtName.pp}, ${allocatorName.pp}, ${constructorName.pp})";
   top.typerep = errorType();
@@ -224,7 +225,7 @@ top::ValueItem ::= adtName::Name allocatorName::Name constructorName::Name ts::T
 }
 
 abstract production templateVarReferenceConstructorInstCallExpr
-top::Expr ::= adtName::Name allocatorName::Name constructorName::Name ts::TypeNames paramTypes::[Type] n::Name args::Exprs
+top::Expr ::= adtName::Name allocatorName::Name constructorName::Name ts::TemplateArgNames paramTypes::[Type] n::Name args::Exprs
 {
   propagate substituted;
   top.pp = parens(ppConcat([n.pp, parens(ppImplode(cat(comma(), space()), args.pps))]));
@@ -245,10 +246,10 @@ top::Expr ::= adtName::Name allocatorName::Name constructorName::Name ts::TypeNa
       proto_typedef _var_d;
       ({$BaseTypeExpr{resultTypeExpr} $name{resultName} =
           ($BaseTypeExpr{resultTypeExpr})$Name{allocatorName}(
-            sizeof(inst _var_d<inst $TName{adtName}<$TypeNames{ts}>>));
-        *(inst _var_d<inst $TName{adtName}<$TypeNames{ts}>> *)$name{resultName} =
-          inst _Bound<inst $TName{adtName}<$TypeNames{ts}>>(
-            inst $Name{constructorName}<$TypeNames{ts}>($Exprs{args}));
+            sizeof(inst _var_d<inst $TName{adtName}<$TemplateArgNames{ts}>>));
+        *(inst _var_d<inst $TName{adtName}<$TemplateArgNames{ts}>> *)$name{resultName} =
+          inst _Bound<inst $TName{adtName}<$TemplateArgNames{ts}>>(
+            inst $Name{constructorName}<$TemplateArgNames{ts}>($Exprs{args}));
         $name{resultName};})
     };
   forwards to mkErrorCheck(localErrors, fwrd);

@@ -10,7 +10,7 @@ top::TypeModifierExpr ::= q::Qualifiers sub::TypeModifierExpr loc::Location
   top.rpp = sub.rpp;
   top.isFunctionArrayTypeExpr = false;
   
-  top.inferredTypes = sub.inferredTypes;
+  top.inferredArgs = sub.inferredArgs;
   top.argumentBaseType = sub.argumentBaseType;
   sub.argumentType =
     case top.argumentType of
@@ -29,7 +29,9 @@ top::TypeModifierExpr ::= q::Qualifiers sub::TypeModifierExpr loc::Location
   local globalDecls::Decls =
     foldDecl(
       sub.decls ++
-      [templateTypeExprInstDecl(q, name("_var_d", location=builtin), [sub.typerep])]);
+      [templateTypeExprInstDecl(
+        q, name("_var_d", location=builtin),
+        foldTemplateArg([typeTemplateArg(sub.typerep)]))]);
   
   -- Non-interfering overrides for better performance
   top.decls = [injectGlobalDeclsDecl(globalDecls)];
@@ -111,8 +113,8 @@ top::ExtType ::= sub::Type
         nilQualifier(),
         adtExtType(
           "_var_d",
-          templateMangledName("_var_d", [sub]),
-          templateMangledRefId("_var_d", [sub]))).host);
+          templateMangledName("_var_d", foldTemplateArg([typeTemplateArg(sub)])),
+          templateMangledRefId("_var_d", foldTemplateArg([typeTemplateArg(sub)])))).host);
   top.baseTypeExpr = sub.baseTypeExpr;
   top.typeModifierExpr = varTypeExpr(top.givenQualifiers, sub.typeModifierExpr, builtin);
   top.mangledName = s"var_${sub.mangledName}_";
@@ -127,8 +129,14 @@ top::ExtType ::= sub::Type
     \ l::Location env::Decorated Env ->
       sub.showErrors(l, env) ++
       checkUnificationHeaderTemplateDef("show_var", l, env);
+  top.strErrors =
+    \ l::Location env::Decorated Env ->
+      sub.showErrors(l, env) ++
+      checkUnificationHeaderTemplateDef("str_var", l, env);
   top.showProd =
     \ e::Expr -> ableC_Expr { inst show_var<$directTypeExpr{sub}>($Expr{e}) };
+  top.strProd =
+    \ e::Expr -> ableC_Expr { inst str_var<$directTypeExpr{sub}>($Expr{e}) };
   
   local topType::Type = extType(top.givenQualifiers, top);
   top.unifyErrors =
