@@ -5,7 +5,6 @@ import edu:umn:cs:melt:ableC:abstractsyntax:overloadable;
 abstract production varTypeExpr
 top::TypeModifierExpr ::= q::Qualifiers sub::TypeModifierExpr loc::Location
 {
-  propagate substituted;
   top.lpp = pp" ? ${terminate(space(), q.pps)}${sub.lpp}";
   top.rpp = sub.rpp;
   top.isFunctionArrayTypeExpr = false;
@@ -102,7 +101,7 @@ top::ExtType ::=
 abstract production varType
 top::ExtType ::= sub::Type
 {
-  propagate substituted, canonicalType;
+  propagate canonicalType;
   top.lpp = sub.lpp;
   top.rpp = pp" ? ${terminate(space(), top.givenQualifiers.pps)}${sub.rpp}";
   top.pp = error("TODO");

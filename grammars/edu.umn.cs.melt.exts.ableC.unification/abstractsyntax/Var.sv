@@ -5,7 +5,6 @@ import edu:umn:cs:melt:ableC:abstractsyntax:overloadable;
 abstract production freeVarExpr
 top::Expr ::= ty::TypeName allocator::Expr
 {
-  propagate substituted;
   top.pp = pp"freevar<${ty.pp}>(${allocator.pp})";
   
   local expectedAllocatorType::Type =
@@ -44,7 +43,6 @@ top::Expr ::= ty::TypeName allocator::Expr
 abstract production boundVarExpr
 top::Expr ::= allocator::Expr e::Expr
 {
-  propagate substituted;
   top.pp = pp"boundvar(${allocator.pp}, ${e.pp})";
   
   local expectedAllocatorType::Type =

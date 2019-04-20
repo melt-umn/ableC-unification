@@ -3,7 +3,6 @@ grammar edu:umn:cs:melt:exts:ableC:unification:abstractsyntax;
 abstract production unifyExpr
 top::Expr ::= e1::Expr e2::Expr trail::MaybeExpr
 {
-  propagate substituted;
   top.pp = pp"unify(${e1.pp}, ${e2.pp}${if trail.isJust then pp", ${trail.pp}" else notext()})";
   
   local trailExpr::Expr =
@@ -36,7 +35,6 @@ top::Expr ::= e1::Expr e2::Expr trail::MaybeExpr
 abstract production defaultUnifyExpr
 top::Expr ::= e1::Expr e2::Expr trail::Expr
 {
-  propagate substituted;
   top.pp = pp"unifyDefault(${e1.pp}, ${e2.pp}, ${trail.pp})";
   
   forwards to equalsExpr(e1, e2, location=builtin);
@@ -45,7 +43,6 @@ top::Expr ::= e1::Expr e2::Expr trail::Expr
 abstract production varValUnifyExpr
 top::Expr ::= e1::Expr e2::Expr trail::Expr
 {
-  propagate substituted;
   top.pp = pp"unifyVarVal(${e1.pp}, ${e2.pp}, ${trail.pp})";
   
   forwards to
@@ -57,7 +54,6 @@ top::Expr ::= e1::Expr e2::Expr trail::Expr
 abstract production valVarUnifyExpr
 top::Expr ::= e1::Expr e2::Expr trail::Expr
 {
-  propagate substituted;
   top.pp = pp"unifyValVar(${e1.pp}, ${e2.pp}, ${trail.pp})";
   
   forwards to
@@ -71,7 +67,6 @@ top::Expr ::= e1::Expr e2::Expr trail::Expr
 abstract production varVarUnifyExpr
 top::Expr ::= e1::Expr e2::Expr trail::Expr
 {
-  propagate substituted;
   top.pp = pp"unifyVarVar(${e1.pp}, ${e2.pp}, ${trail.pp})";
   
   local e1SubType::Type = varSubType(e1.typerep);
@@ -87,7 +82,6 @@ synthesized attribute unifyTransform<a>::a;
 abstract production structUnifyExpr
 top::Expr ::= e1::Expr e2::Expr trail::Expr
 {
-  propagate substituted;
   top.pp = pp"unifyStruct(${e1.pp}, ${e2.pp}, ${trail.pp})";
   
   local structLookup::[RefIdItem] =
@@ -254,7 +248,6 @@ top::StructDeclarator ::= msg::[Message]
 abstract production adtUnifyExpr
 top::Expr ::= e1::Expr e2::Expr trail::Expr
 {
-  propagate substituted;
   top.pp = pp"unifyDatatype(${e1.pp}, ${e2.pp}, ${trail.pp})";
   
   local adtLookup::[RefIdItem] =
