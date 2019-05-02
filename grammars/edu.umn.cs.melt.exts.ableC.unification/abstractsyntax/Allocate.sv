@@ -3,7 +3,6 @@ grammar edu:umn:cs:melt:exts:ableC:unification:abstractsyntax;
 abstract production varReferenceDecl
 top::Decl ::= id::Name  allocator::Name
 {
-  propagate substituted;
   top.pp = pp"var_reference datatype ${id.pp} with ${allocator.pp};";
   
   local expectedAllocatorType::Type =
@@ -55,7 +54,6 @@ top::Decl ::= id::Name  allocator::Name
 abstract production templateVarReferenceDecl
 top::Decl ::= id::Name  allocator::Name
 {
-  propagate substituted;
   top.pp = pp"template var_reference datatype ${id.pp} with ${allocator.pp};";
   
   local expectedAllocatorType::Type =
@@ -170,7 +168,6 @@ top::ValueItem ::= adtName::Name allocatorName::Name constructorName::Name param
 abstract production varReferenceConstructorCallExpr
 top::Expr ::= adtName::Name allocatorName::Name constructorName::Name paramTypes::[Type] n::Name args::Exprs
 {
-  propagate substituted;
   top.pp = parens(ppConcat([n.pp, parens(ppImplode(cat(comma(), space()), args.pps))]));
   local localErrors::[Message] = args.errors ++ args.argumentErrors;
   
@@ -199,7 +196,6 @@ top::Expr ::= adtName::Name allocatorName::Name constructorName::Name paramTypes
 abstract production templateVarReferenceConstructorInstDecl
 top::Decl ::= adtName::Name allocatorName::Name constructorName::Name n::Name ts::TemplateArgNames ps::Parameters
 {
-  propagate substituted;
   top.pp = pp"templateVarReferenceConstructorInstDecl ${n.pp};";
   
   ps.position = 0;
@@ -227,7 +223,6 @@ top::ValueItem ::= adtName::Name allocatorName::Name constructorName::Name ts::T
 abstract production templateVarReferenceConstructorInstCallExpr
 top::Expr ::= adtName::Name allocatorName::Name constructorName::Name ts::TemplateArgNames paramTypes::[Type] n::Name args::Exprs
 {
-  propagate substituted;
   top.pp = parens(ppConcat([n.pp, parens(ppImplode(cat(comma(), space()), args.pps))]));
   local localErrors::[Message] = args.errors ++ args.argumentErrors;
   

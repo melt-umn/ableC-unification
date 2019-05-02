@@ -3,7 +3,6 @@ grammar edu:umn:cs:melt:exts:ableC:unification:abstractsyntax;
 abstract production freeVarPattern
 top::Pattern ::=
 {
-  propagate substituted;
   top.pp = pp"freevar";
   top.decls = [];
   top.patternDefs := [];
@@ -32,7 +31,6 @@ top::Pattern ::=
 abstract production boundVarPattern
 top::Pattern ::= p::Pattern
 {
-  propagate substituted;
   top.pp = pp"?&${p.pp}";
   top.decls = p.decls;
   top.patternDefs := p.patternDefs;
