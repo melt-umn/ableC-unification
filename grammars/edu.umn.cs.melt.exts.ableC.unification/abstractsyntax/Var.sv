@@ -2,35 +2,35 @@ grammar edu:umn:cs:melt:exts:ableC:unification:abstractsyntax;
 
 import edu:umn:cs:melt:ableC:abstractsyntax:overloadable;
 
-abstract production newVarExpr
-top::Expr ::= ty::TypeName init::MaybeExpr
+abstract production freeVarExpr
+top::Expr ::= ty::TypeName allocator::Expr
 {
-  propagate substituted;
-  top.pp = pp"newvar<${ty.pp}>(${init.pp})";
+  top.pp = pp"freevar<${ty.pp}>(${allocator.pp})";
+  
+  local expectedAllocatorType::Type =
+    functionType(
+      pointerType(
+        nilQualifier(),
+        builtinType(nilQualifier(), voidType())),
+      protoFunctionType([builtinType(nilQualifier(), unsignedType(longType()))], false),
+      nilQualifier());
   
   local localErrors::[Message] =
-    ty.errors ++ init.errors ++
-    case init of
-    | justExpr(e) ->
-      if compatibleTypes(e.typerep, ty.typerep, false, false)
-      then []
-      else [err(e.location, s"newvar expected initial value of type ${showType(e.typerep)} (got ${showType(ty.typerep)})")]
-    | nothingExpr() -> []
-    end ++
+    ty.errors ++ allocator.errors ++
+    (if !ty.typerep.isCompleteType(addEnv(ty.defs, ty.env))
+     then [err(top.location, s"var type parameter has incomplete type ${showType(ty.typerep)}")]
+     else []) ++
+    (if !typeAssignableTo(expectedAllocatorType, allocator.typerep)
+     then [err(allocator.location, s"Allocator must have type void *(unsigned long) (got ${showType(allocator.typerep)})")]
+     else []) ++
     checkUnificationHeaderTemplateDef("_var_d", top.location, top.env);
   
   local fwrd::Expr =
     ableC_Expr {
       proto_typedef _var_d;
       ({inst _var_d<$TypeName{ty}> *_result =
-          alloca(sizeof(inst _var_d<$directTypeExpr{ty.typerep}>));
-        *_result = $Expr{
-          case init of
-          | nothingExpr() ->
-            ableC_Expr { inst _Free<$directTypeExpr{ty.typerep}>() }
-          | justExpr(e) ->
-            ableC_Expr { inst _Bound<$directTypeExpr{ty.typerep}>($Expr{e}) }
-          end};
+          $Expr{allocator}(sizeof(inst _var_d<$directTypeExpr{ty.typerep}>));
+        *_result = inst _Free<$directTypeExpr{ty.typerep}>();
         ($TypeName{
            typeName(
              directTypeExpr(ty.typerep),
@@ -40,35 +40,37 @@ top::Expr ::= ty::TypeName init::MaybeExpr
   forwards to mkErrorCheck(localErrors, fwrd);
 }
 
-abstract production varRefExpr
-top::Expr ::= e::Expr
+abstract production boundVarExpr
+top::Expr ::= allocator::Expr e::Expr
 {
-  propagate substituted;
-  top.pp = pp"?&(${e.pp})";
+  top.pp = pp"boundvar(${allocator.pp}, ${e.pp})";
+  
+  local expectedAllocatorType::Type =
+    functionType(
+      pointerType(
+        nilQualifier(),
+        builtinType(nilQualifier(), voidType())),
+      protoFunctionType([builtinType(nilQualifier(), unsignedType(longType()))], false),
+      nilQualifier());
   
   local localErrors::[Message] =
-    e.errors ++
+    allocator.errors ++ e.errors ++
+    (if !typeAssignableTo(expectedAllocatorType, allocator.typerep)
+     then [err(allocator.location, s"Allocator must have type void *(unsigned long) (got ${showType(allocator.typerep)})")]
+     else []) ++
     checkUnificationHeaderTemplateDef("_var_d", top.location, top.env);
-  local fwrd::Expr =
-    newVarExpr(
-      typeName(directTypeExpr(e.typerep), baseTypeExpr()),
-      justExpr(e),
-      location=builtin);
-  forwards to mkErrorCheck(localErrors, fwrd);
-}
-
-abstract production showVar
-top::Expr ::= e::Expr
-{
-  propagate substituted;
-  top.pp = pp"show(${e.pp})";
   
-  local localErrors::[Message] =
-    checkUnificationHeaderTemplateDef("show_var", top.location, top.env);
-    
-  local subType::Type = varSubType(e.typerep);
   local fwrd::Expr =
-    ableC_Expr { inst show_var<$directTypeExpr{subType}>($Expr{e}) };
+    ableC_Expr {
+      proto_typedef _var_d;
+      ({inst _var_d<$directTypeExpr{e.typerep}> *_result =
+          $Expr{allocator}(sizeof(inst _var_d<$directTypeExpr{e.typerep}>));
+        *_result = inst _Bound<$directTypeExpr{e.typerep}>($Expr{e});
+        ($TypeName{
+           typeName(
+             directTypeExpr(e.typerep),
+             varTypeExpr(nilQualifier(), baseTypeExpr(), builtin))})_result;})
+    };
   
   forwards to mkErrorCheck(localErrors, fwrd);
 }

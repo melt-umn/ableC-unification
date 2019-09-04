@@ -18,6 +18,8 @@ int main() {
   unification_trail trail = new unification_trail();
   if (unify(a, b, trail)) {
     printf("%s\n", show(trail).text);
+    if (trail.size != 2)
+      return 2;
     printf("%s\n", show(a).text);
     printf("%s\n", show(b).text);
   } else {

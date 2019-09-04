@@ -7,63 +7,88 @@
 #ifndef _UNIFICATION_XH
 #define _UNIFICATION_XH
 
-template<a>
+template<typename a>
 datatype _var_d {
   _Free();
   _Bound(a val);
   _BoundVar(a ?var);
 };
 
-template<a>
-_Bool is_bound(a ?var) {
-  return match ((inst _var_d<a> *)var)
-    (&_Free() -> 0;
-     &_Bound(_) -> 1;
-     &_BoundVar(other_var) -> inst is_bound<a>(other_var););
+template<typename a>
+void delete_var(void (*dealloc)(void *), a ?var) {
+  dealloc((_var_d<a> *)var);
 }
 
-template<a>
+template<typename a>
+_Bool is_bound(a ?var) {
+  return match ((_var_d<a> *)var)
+    (&_Free() -> 0;
+     &_Bound(_) -> 1;
+     &_BoundVar(other_var) -> is_bound(other_var););
+}
+
+template<typename a>
 a value(a ?var) {
-  match ((inst _var_d<a> *)var) {
+  match ((_var_d<a> *)var) {
     &_Free() -> {
-      fprintf(stderr, "Error: Cannot access value of free variable %s\n", show(var).text);
+      fprintf(stderr, "Error: Cannot access value of free variable\n");
       exit(1);
     }
     &_Bound(val) -> {
       return val;
     }
     &_BoundVar(other_var) -> {
-      return inst value<a>(other_var);
+      return value(other_var);
     }
   }
 }
 
-template<a>
+template<typename a>
 string show_var(a ?var) {
-  if (inst is_bound<a>(var)) {
-    return "?&" + show(inst value<a>(var));
-  } else {
-    char buffer[24];
-    sprintf(buffer, "<var %x>", (union {a ?v; unsigned n;}){.v = var}.n);
-    return str(buffer);
+  match (var) {
+    freevar -> {
+      char buffer[24];
+      sprintf(buffer, "<var %x>", (union {a ?v; unsigned n;}){.v = var}.n);
+      return str(buffer);
+    }
+    ?&val -> {
+      return show(val);
+    }
+  }
+}
+
+template<typename a>
+string str_var(a ?var) {
+  match (var) {
+    freevar -> {
+      char buffer[24];
+      sprintf(buffer, "<var %x>", (union {a ?v; unsigned n;}){.v = var}.n);
+      return str(buffer);
+    }
+    ?&val -> {
+      return str(val);
+    }
   }
 }
 
 typedef vector<enum _var_d_tag *> unification_trail;
 
-static void undo_trail(unification_trail trail) {
-  trail.length;
-  for (size_t i = 0; i < trail.length; i++) {
-   *trail[i] = _var_d__Free;
-  }
-  inst resize_vector<enum _var_d_tag *>(trail, 0);
+static inline unification_trail new_trail(void) {
+  return new unification_trail(0, NULL, malloc, realloc, free);
 }
 
-template<a>
+static inline void undo_trail(unification_trail trail, size_t index) {
+  for (size_t i = index; i < trail.length; i++) {
+    *trail[i] = _var_d__Free;
+  }
+  resize_vector(trail, index);
+}
+
+template<typename a>
 _Bool _unify_var_val(a ?var, a val, unification_trail trail) {
-  match ((inst _var_d<a> *)var) {
+  match ((_var_d<a> *)var) {
     v@&_Free() -> {
-      *v = inst _Bound<a>(val);
+      *v = _Bound(val);
       if ((void*)trail) {
         trail.append(&v->tag);
       }
@@ -73,17 +98,17 @@ _Bool _unify_var_val(a ?var, a val, unification_trail trail) {
       return unify(other_val, val, trail);
     }
     &_BoundVar(other_var) -> {
-      return inst _unify_var_val<a>(other_var, val, trail);
+      return _unify_var_val(other_var, val, trail);
     }
   }
 }
 
-template<a>
+template<typename a>
 _Bool _unify_var_var(a ?var1, a? var2, unification_trail trail) {
-  match ((inst _var_d<a> *)var1, (inst _var_d<a> *)var2) {
+  match ((_var_d<a> *)var1, (_var_d<a> *)var2) {
     v1@&_Free(), v2@&_Free() -> {
       if (v1 != v2) {
-        *v1 = inst _BoundVar<a>(var2);
+        *v1 = _BoundVar(var2);
         if ((void*)trail) {
           trail.append(&v1->tag);
         }
@@ -91,13 +116,13 @@ _Bool _unify_var_var(a ?var1, a? var2, unification_trail trail) {
       return 1;
     }
     &_Free(), _ -> {
-      return inst _unify_var_var<a>(var2, var1, trail);
+      return _unify_var_var(var2, var1, trail);
     }
     &_Bound(other_val), _ -> {
-      return inst _unify_var_val<a>(var2, other_val, trail);
+      return _unify_var_val(var2, other_val, trail);
     }
     &_BoundVar(other_var), _ -> {
-      return inst _unify_var_var<a>(other_var, var2, trail);
+      return _unify_var_var(other_var, var2, trail);
     }
   }
 }

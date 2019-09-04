@@ -2,22 +2,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+template<typename a>
 datatype Tree {
-  Node(datatype Tree ?l, datatype Tree ?r);
-  Leaf(int val);
+  Node(Tree<a> ?l, Tree<a> ?r);
+  Leaf(a val);
 };
 
-var_reference datatype Tree with alloca;
+template var_reference datatype Tree with alloca;
 
 int main() {
-  datatype Tree ?a = alloca_Node(alloca_Leaf(42), freevar<datatype Tree>(alloca));
+  Tree<int> ?a = alloca_Node(alloca_Leaf(42), freevar<Tree<int>>(alloca));
   printf("%s\n", show(a).text);
-  datatype Tree ?b = alloca_Node(freevar<datatype Tree>(alloca), alloca_Node(alloca_Leaf(25), freevar<datatype Tree>(alloca)));
+  Tree<int> ?b = alloca_Node(freevar<Tree<int>>(alloca), alloca_Node(alloca_Leaf(25), freevar<Tree<int>>(alloca)));
   printf("%s\n", show(b).text);
 
   unification_trail trail = new unification_trail();
   if (unify(a, b, trail)) {
     printf("%s\n", show(trail).text);
+    if (trail.size != 2)
+      return 2;
     printf("%s\n", show(a).text);
     printf("%s\n", show(b).text);
   } else {

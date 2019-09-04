@@ -7,7 +7,19 @@ datatype Tree {
   Leaf(int val);
 };
 
-var_reference datatype Tree with alloca;
+int foo(float);
+
+var_reference datatype Tree with foo; // Bad allocator
+
+datatype Foo {
+  B(datatype Bar ?b);
+};
+
+struct bar { int x; };
+
+datatype Bar {
+  B1(struct bar ?b);
+};
 
 int main() {
   datatype Tree ?a = alloca_Node(alloca_Leaf(42), freevar<datatype Tree>(alloca));
@@ -15,9 +27,11 @@ int main() {
   datatype Tree ?b = alloca_Node(freevar<datatype Tree>(alloca), alloca_Node(alloca_Leaf(25), freevar<datatype Tree>(alloca)));
   printf("%s\n", show(b).text);
 
-  unification_trail trail = new unification_trail();
+  int trail; // Invalid type to unify
   if (unify(a, b, trail)) {
     printf("%s\n", show(trail).text);
+    if (trail.size != 2)
+      return 2;
     printf("%s\n", show(a).text);
     printf("%s\n", show(b).text);
   } else {
@@ -25,7 +39,21 @@ int main() {
     return 1;
   }
 
-  undo_trail(trail, 0);
+  undo_trail(trail);
   printf("%s\n", show(a).text);
   printf("%s\n", show(b).text);
+
+  // Invalid types to unify
+  int ?c;
+  unify(a, c);
+
+  int ???d;
+  unify(c, d);
+
+  datatype Foo ?e, ?f;
+  unify(e, f);
+  unify(e, f); // Same error, repeated
+
+  struct bar ?g, h;
+  unify(g, h);
 }
