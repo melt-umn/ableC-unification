@@ -25,9 +25,12 @@ top::Expr ::= e1::Expr e2::Expr trail::MaybeExpr
     type.unifyErrors(top.location, addEnv(e2.defs, e2.env)) ++
     checkUnificationHeaderDef("unification_trail", top.location, top.env);
   
-  -- Can't use decExpr wrappers here since e1, e2 may recieve an environemnt containing more defs
-  -- in the forward.
-  local fwrd::Expr = type.unifyProd(e1, e2, trailExpr, top.location);
+  local fwrd::Expr =
+    type.unifyProd(
+      decExpr(e1, location=e1.location),
+      decExpr(e2, location=e2.location),
+      trailExpr,
+      top.location);
   
   forwards to mkErrorCheck(localErrors, fwrd);
 }
@@ -45,9 +48,25 @@ top::Expr ::= e1::Expr e2::Expr trail::Expr
 {
   top.pp = pp"unifyVarVal(${e1.pp}, ${e2.pp}, ${trail.pp})";
   
+  e2.env = addEnv(e1.defs, e1.env);
+  
+  local tmpName1::String = "_var_" ++ toString(genInt());
+  local tmpName2::String = "_val_" ++ toString(genInt());
+  local initialDecls::Decl =
+    decls(
+      ableC_Decls {
+        $directTypeExpr{e1.typerep} $name{tmpName1} = $Expr{decExpr(e1, location=e1.location)};
+        $directTypeExpr{e2.typerep} $name{tmpName2} = $Expr{decExpr(e2, location=e2.location)};
+      });
+  initialDecls.env = addEnv(e2.defs, e2.env);
+  initialDecls.returnType = top.returnType;
+  initialDecls.isTopLevel = false;
+  
   forwards to
     ableC_Expr {
-      inst _unify_var_val<$directTypeExpr{e2.typerep}>($Expr{e1}, $Expr{e2}, $Expr{trail})
+      ({$Decl{decDecl(initialDecls)}
+        inst _unify_var_val<$directTypeExpr{e2.typerep}>(
+          $name{tmpName1}, $name{tmpName2}, $Expr{trail});})
     };
 }
 
@@ -56,11 +75,25 @@ top::Expr ::= e1::Expr e2::Expr trail::Expr
 {
   top.pp = pp"unifyValVar(${e1.pp}, ${e2.pp}, ${trail.pp})";
   
+  e2.env = addEnv(e1.defs, e1.env);
+  
+  local tmpName1::String = "_val_" ++ toString(genInt());
+  local tmpName2::String = "_var_" ++ toString(genInt());
+  local initialDecls::Decl =
+    decls(
+      ableC_Decls {
+        $directTypeExpr{e1.typerep} $name{tmpName1} = $Expr{decExpr(e1, location=e1.location)};
+        $directTypeExpr{e2.typerep} $name{tmpName2} = $Expr{decExpr(e2, location=e2.location)};
+      });
+  initialDecls.env = addEnv(e2.defs, e2.env);
+  initialDecls.returnType = top.returnType;
+  initialDecls.isTopLevel = false;
+  
   forwards to
     ableC_Expr {
-      ({$directTypeExpr{e1.typerep} _val = $Expr{e1};
-        $directTypeExpr{e2.typerep} _var = $Expr{e2};
-        inst _unify_var_val<$directTypeExpr{e1.typerep}>(_var, _val, $Expr{trail});})
+      ({$Decl{decDecl(initialDecls)}
+        inst _unify_var_val<$directTypeExpr{e1.typerep}>(
+          $name{tmpName2}, $name{tmpName1}, $Expr{trail});})
     };
 }
 
@@ -69,10 +102,26 @@ top::Expr ::= e1::Expr e2::Expr trail::Expr
 {
   top.pp = pp"unifyVarVar(${e1.pp}, ${e2.pp}, ${trail.pp})";
   
+  e2.env = addEnv(e1.defs, e1.env);
+  
+  local tmpName1::String = "_var_" ++ toString(genInt());
+  local tmpName2::String = "_var_" ++ toString(genInt());
+  local initialDecls::Decl =
+    decls(
+      ableC_Decls {
+        $directTypeExpr{e1.typerep} $name{tmpName1} = $Expr{decExpr(e1, location=e1.location)};
+        $directTypeExpr{e2.typerep} $name{tmpName2} = $Expr{decExpr(e2, location=e2.location)};
+      });
+  initialDecls.env = addEnv(e2.defs, e2.env);
+  initialDecls.returnType = top.returnType;
+  initialDecls.isTopLevel = false;
+  
   local e1SubType::Type = varSubType(e1.typerep);
   forwards to
     ableC_Expr {
-      inst _unify_var_var<$directTypeExpr{e1SubType}>($Expr{e1}, $Expr{e2}, $Expr{trail})
+      ({$Decl{decDecl(initialDecls)}
+        inst _unify_var_var<$directTypeExpr{e1SubType}>(
+          $name{tmpName1}, $name{tmpName2}, $Expr{trail});})
     };
 }
 
@@ -95,13 +144,28 @@ top::Expr ::= e1::Expr e2::Expr trail::Expr
     | structRefIdItem(struct) :: _ -> struct
     end;
   
+  e2.env = addEnv(e1.defs, e1.env);
+  
+  local tmpName1::String = "_struct_" ++ toString(genInt());
+  local tmpName2::String = "_struct_" ++ toString(genInt());
+  local initialDecls::Decl =
+    decls(
+      ableC_Decls {
+        $directTypeExpr{e1.typerep} $name{tmpName1} = $Expr{decExpr(e1, location=e1.location)};
+        $directTypeExpr{e2.typerep} $name{tmpName2} = $Expr{decExpr(e2, location=e2.location)};
+        $Decl{
+          injectGlobalDeclsDecl(
+            foldDecl([maybeValueDecl(struct.unifyFnName, decls(struct.unifyTransform))]))}
+      });
+  initialDecls.env = addEnv(e2.defs, e2.env);
+  initialDecls.returnType = top.returnType;
+  initialDecls.isTopLevel = false;
+  
   forwards to
-    injectGlobalDeclsExpr(
-      foldDecl([maybeValueDecl(struct.unifyFnName, decls(struct.unifyTransform))]),
-      ableC_Expr {
-        $name{struct.unifyFnName}($Expr{e1}, $Expr{e2}, $Expr{trail})
-      },
-      location=builtin);
+    ableC_Expr {
+      ({$Decl{decDecl(initialDecls)}
+        $name{struct.unifyFnName}($name{tmpName1}, $name{tmpName2}, $Expr{trail});})
+    };
 }
 
 attribute unifyErrors occurs on StructDecl, StructItemList, StructItem, StructDeclarators, StructDeclarator;
@@ -261,13 +325,28 @@ top::Expr ::= e1::Expr e2::Expr trail::Expr
     | adtRefIdItem(adt) :: _ -> adt
     end;
   
+  e2.env = addEnv(e1.defs, e1.env);
+  
+  local tmpName1::String = "_adt_" ++ toString(genInt());
+  local tmpName2::String = "_adt_" ++ toString(genInt());
+  local initialDecls::Decl =
+    decls(
+      ableC_Decls {
+        $directTypeExpr{e1.typerep} $name{tmpName1} = $Expr{decExpr(e1, location=e1.location)};
+        $directTypeExpr{e2.typerep} $name{tmpName2} = $Expr{decExpr(e2, location=e2.location)};
+        $Decl{
+          injectGlobalDeclsDecl(
+            foldDecl([maybeValueDecl(adt.unifyFnName, decls(adt.unifyTransform))]))}
+      });
+  initialDecls.env = addEnv(e2.defs, e2.env);
+  initialDecls.returnType = top.returnType;
+  initialDecls.isTopLevel = false;
+  
   forwards to
-    injectGlobalDeclsExpr(
-      foldDecl([maybeValueDecl(adt.unifyFnName, decls(adt.unifyTransform))]),
-      ableC_Expr {
-        $name{adt.unifyFnName}($Expr{e1}, $Expr{e2}, $Expr{trail})
-      },
-      location=builtin);
+    ableC_Expr {
+      ({$Decl{decDecl(initialDecls)}
+        $name{adt.unifyFnName}($name{tmpName1}, $name{tmpName2}, $Expr{trail});})
+    };
 }
 
 attribute unifyErrors occurs on ADTDecl, ConstructorList, Constructor, Parameters, ParameterDecl;
