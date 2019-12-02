@@ -15,19 +15,56 @@ top::Expr ::= e1::Expr e2::Expr trail::MaybeExpr
       }
     end;
   
-  e2.env = addEnv(e1.defs, e1.env);
+  local tmpName1::Name = name("_tmp" ++ toString(genInt()), location=builtin);
+  local tmpName2::Name = name("_tmp" ++ toString(genInt()), location=builtin);
   
-  local type::Type = e1.typerep;
-  type.otherType = e2.typerep;
+  local dcls::Stmt =
+    ableC_Stmt {
+      $Decl{autoDecl(tmpName1, e1)}
+      $Decl{autoDecl(tmpName2, e2)}
+    };
+  dcls.env = top.env;
+  dcls.returnType = top.returnType;
+  
+  local decE1::Decorated Expr =
+    case dcls of
+    | seqStmt(declStmt(autoDecl(_, e1)), _) -> e1
+    end;
+  local decE2::Decorated Expr =
+    case dcls of
+    | seqStmt(_, declStmt(autoDecl(_, e2))) -> e2
+    end;
+  
+  local type::Type = decE1.typerep;
+  type.otherType = decE2.typerep;
   
   local localErrors::[Message] =
-    e1.errors ++ e2.errors ++ trail.errors ++
-    type.unifyErrors(top.location, addEnv(e2.defs, e2.env)) ++
+    decE1.errors ++ decE2.errors ++ trail.errors ++
+    type.unifyErrors(top.location, addEnv(dcls.defs, dcls.env)) ++
     checkUnificationHeaderDef("unification_trail", top.location, top.env);
   
-  -- Can't use decExpr wrappers here since e1, e2 may recieve an environemnt containing more defs
-  -- in the forward.
-  local fwrd::Expr = type.unifyProd(e1, e2, trailExpr, top.location);
+  local fwrd::Expr =
+    case decE1.isSimple, decE2.isSimple, dcls of
+    | true, true, _ -> type.unifyProd(e1, e2, trailExpr, top.location)
+    | true, false, seqStmt(_, d) ->
+      stmtExpr(
+        decStmt(d),
+        type.unifyProd(e1, declRefExpr(tmpName2, location=builtin), trailExpr, top.location),
+        location=builtin)
+    | false, true, seqStmt(d, _) ->
+      stmtExpr(
+        decStmt(d),
+        type.unifyProd(declRefExpr(tmpName1, location=builtin), e2, trailExpr, top.location),
+        location=builtin)
+    | false, false, _ ->
+      stmtExpr(
+        decStmt(dcls),
+        type.unifyProd(
+          declRefExpr(tmpName1, location=builtin),
+          declRefExpr(tmpName2, location=builtin),
+          trailExpr, top.location),
+        location=builtin)
+    end;
   
   forwards to mkErrorCheck(localErrors, fwrd);
 }
@@ -58,9 +95,7 @@ top::Expr ::= e1::Expr e2::Expr trail::Expr
   
   forwards to
     ableC_Expr {
-      ({$directTypeExpr{e1.typerep} _val = $Expr{e1};
-        $directTypeExpr{e2.typerep} _var = $Expr{e2};
-        inst _unify_var_val<$directTypeExpr{e1.typerep}>(_var, _val, $Expr{trail});})
+      inst _unify_var_val<$directTypeExpr{e1.typerep}>($Expr{e2}, $Expr{e1}, $Expr{trail})
     };
 }
 
