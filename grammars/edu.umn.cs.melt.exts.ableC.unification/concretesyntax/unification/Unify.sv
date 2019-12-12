@@ -7,7 +7,7 @@ imports edu:umn:cs:melt:ableC:abstractsyntax:host;
 imports edu:umn:cs:melt:ableC:abstractsyntax:construction;
 imports edu:umn:cs:melt:exts:ableC:unification:abstractsyntax;
 
-marking terminal Unify_t 'unify' lexer classes {Ckeyword};
+marking terminal Unify_t 'unify' lexer classes {Keyword, Global};
 
 concrete productions top::PrimaryExpr_c
 | 'unify' LParen_t e1::AssignExpr_c ',' e2::AssignExpr_c ')'
