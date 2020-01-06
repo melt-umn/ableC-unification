@@ -7,8 +7,8 @@ imports edu:umn:cs:melt:exts:ableC:unification:abstractsyntax;
 
 imports edu:umn:cs:melt:exts:ableC:algebraicDataTypes:patternmatching:concretesyntax;
 
-marking terminal PatternFreeVar_t 'freevar' lexer classes {Ckeyword};
-marking terminal VarRefOp_t '?&' precedence = 1, lexer classes {Csymbol};
+marking terminal PatternFreeVar_t 'freevar' lexer classes {Keyword, Global};
+marking terminal VarRefOp_t '?&' precedence = 1, lexer classes {Operator};
 
 concrete productions top::BasicPattern_c
 | PatternFreeVar_t
