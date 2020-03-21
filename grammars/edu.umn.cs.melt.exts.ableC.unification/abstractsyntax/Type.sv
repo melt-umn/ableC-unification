@@ -9,7 +9,7 @@ top::TypeModifierExpr ::= q::Qualifiers sub::TypeModifierExpr loc::Location
   top.rpp = sub.rpp;
   top.isFunctionArrayTypeExpr = false;
   
-  top.inferredArgs = sub.inferredArgs;
+  top.inferredArgs := sub.inferredArgs;
   top.argumentBaseType = sub.argumentBaseType;
   sub.argumentType =
     case top.argumentType of
@@ -33,7 +33,7 @@ top::TypeModifierExpr ::= q::Qualifiers sub::TypeModifierExpr loc::Location
         foldTemplateArg([typeTemplateArg(sub.typerep)]))]);
   
   -- Non-interfering overrides for better performance
-  top.decls = [injectGlobalDeclsDecl(globalDecls)];
+  top.decls := [injectGlobalDeclsDecl(globalDecls)];
   top.errors := localErrors;
   top.typerep =
     case sub.typerep of
