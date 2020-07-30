@@ -71,15 +71,34 @@ string str_var(a ?var) {
   }
 }
 
-typedef vector<enum _var_d_tag *> unification_trail;
+datatype _trail_action {
+  _Sub(enum _var_d_tag *tag);
+  _Action(closure<(void) -> void> action, void (*freeFn)(void *));
+}
+
+typedef vector<datatype _trail_action> unification_trail;
 
 static inline unification_trail new_trail(void) {
-  return new unification_trail(0, NULL, malloc, realloc, free);
+  return new unification_trail(0, _Sub(NULL), malloc, realloc, free);
+}
+
+static inline void push_action(unification_trail trail, closure<(void) -> void> action, void (*freeFn)(void *)) {
+  trail.append(_Action(action, freeFn));
 }
 
 static inline void undo_trail(unification_trail trail, size_t index) {
-  for (size_t i = index; i < trail.length; i++) {
-    *trail[i] = _var_d__Free;
+  for (size_t i = trail.length; i > index; i--) {
+    match (trail[i - 1]) {
+      _Sub(tag) -> {
+        *tag = _var_d__Free;
+      }
+      _Action(action, freeFn) -> {
+        action();
+        if (freeFn) {
+          action.free(*freeFn);
+        }
+      }
+    }
   }
   resize_vector(trail, index);
 }
@@ -90,7 +109,7 @@ _Bool _unify_var_val(a ?var, a val, unification_trail trail) {
     v@&_Free() -> {
       *v = _Bound(val);
       if ((void*)trail) {
-        trail.append(&v->tag);
+        trail.append(_Sub(&v->tag));
       }
       return 1;
     }
@@ -110,7 +129,7 @@ _Bool _unify_var_var(a ?var1, a? var2, unification_trail trail) {
       if (v1 != v2) {
         *v1 = _BoundVar(var2);
         if ((void*)trail) {
-          trail.append(&v1->tag);
+          trail.append(_Sub(&v1->tag));
         }
       }
       return 1;
