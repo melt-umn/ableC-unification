@@ -7,6 +7,7 @@ exports edu:umn:cs:melt:exts:ableC:templateAlgebraicDataTypes:datatype:concretes
 exports edu:umn:cs:melt:exts:ableC:string:concretesyntax;
 exports edu:umn:cs:melt:exts:ableC:vector:concretesyntax;
 exports edu:umn:cs:melt:exts:ableC:constructor:concretesyntax;
+exports edu:umn:cs:melt:exts:ableC:closure:concretesyntax:typeExpr;
 
 exports edu:umn:cs:melt:exts:ableC:unification:concretesyntax:unification;
 exports edu:umn:cs:melt:exts:ableC:unification:concretesyntax:allocation;
