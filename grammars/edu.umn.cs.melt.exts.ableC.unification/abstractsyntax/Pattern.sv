@@ -3,11 +3,9 @@ grammar edu:umn:cs:melt:exts:ableC:unification:abstractsyntax;
 abstract production freeVarPattern
 top::Pattern ::=
 {
+  propagate decls, patternDefs, defs, errors;
   top.pp = pp"freevar";
-  top.decls = [];
-  top.patternDefs := [];
-  top.defs := [];
-  top.errors :=
+  top.errors <-
     case top.expectedType.withoutAttributes of
     | extType(_, varType(_)) -> []
     | errorType() -> []
@@ -31,11 +29,8 @@ top::Pattern ::=
 abstract production boundVarPattern
 top::Pattern ::= p::Pattern
 {
+  propagate decls, patternDefs, defs, errors;
   top.pp = pp"?&${p.pp}";
-  top.decls = p.decls;
-  top.patternDefs := p.patternDefs;
-  top.defs := p.defs;
-  top.errors := p.errors;
   top.errors <-
     case top.expectedType.withoutAttributes of
     | extType(_, varType(_)) -> []
