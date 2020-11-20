@@ -215,11 +215,11 @@ top::ExtType ::= kwd::StructOrEnumOrUnion  n::String  refId::String
       | structSEU(), extType(_, refIdExtType(structSEU(), otherName, otherRefId)) ->
         if refId == otherRefId
         then []
-        else [err(l, s"Unification struct types must match (got struct ${n}, struct ${otherName})")]
+        else [err(l, s"Unification struct types must match (got struct ${tagName}, struct ${otherName})")]
       | structSEU(), extType(_, varType(extType(_, refIdExtType(structSEU(), otherName, otherRefId)))) ->
         if refId == otherRefId
         then []
-        else [err(l, s"Unification value and variable struct types must match (got struct ${n}, datatype ${otherName})")]
+        else [err(l, s"Unification value and variable struct types must match (got struct ${tagName}, datatype ${otherName})")]
       | structSEU(), errorType() -> []
       | structSEU(), t -> [err(l, s"Unification is not defined for struct ${n} and non-struct ${showType(t)}")]
       | unionSEU(), _ -> [err(l, s"Unification is not defined for unions")]
