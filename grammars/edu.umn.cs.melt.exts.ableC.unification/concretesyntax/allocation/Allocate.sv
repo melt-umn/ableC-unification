@@ -33,8 +33,8 @@ action {
         context);
   -- If the datatype hasn't been declared, then do nothing
 }
-| VarReference_t Datatype_t id::Identifier_t 'with' alloc::Identifier_c 'prefix' pfx::Identifier_c ';'
-  { top.ast = varReferenceDecl(fromId(id), alloc.ast, just(pfx.ast)); }
+| VarReference_t Datatype_t id::Identifier_t 'with' alloc::Identifier_t 'prefix' pfx::Identifier_c ';'
+  { top.ast = varReferenceDecl(fromId(id), fromId(alloc), just(pfx.ast)); }
 action {
   local constructors::Maybe<[String]> = lookupBy(stringEq, id.lexeme, adtConstructors);
   if (constructors.isJust)
@@ -61,8 +61,8 @@ action {
         context);
   -- If the datatype hasn't been declared, then do nothing
 }
-| 'template' NonMarkingVarReference_t Datatype_t id::Identifier_t 'with' alloc::Identifier_c 'prefix' pfx::Identifier_c ';'
-  { top.ast = templateVarReferenceDecl(fromId(id), alloc.ast, just(pfx.ast)); }
+| 'template' NonMarkingVarReference_t Datatype_t id::Identifier_t 'with' alloc::Identifier_t 'prefix' pfx::Identifier_c ';'
+  { top.ast = templateVarReferenceDecl(fromId(id), fromId(alloc), just(pfx.ast)); }
 action {
   local constructors::Maybe<[String]> = lookupBy(stringEq, id.lexeme, adtConstructors);
   if (constructors.isJust)
