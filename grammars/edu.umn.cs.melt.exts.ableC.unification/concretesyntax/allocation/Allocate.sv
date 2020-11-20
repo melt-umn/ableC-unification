@@ -20,6 +20,32 @@ concrete productions top::Declaration_c
 -- id is Identifer_t here to avoid follow spillage
 | VarReference_t Datatype_t id::Identifier_t 'with' alloc::Identifier_c ';'
   { top.ast = varReferenceDecl(fromId(id), alloc.ast); }
+action {
+  local constructors::Maybe<[String]> = lookupBy(stringEq, id.lexeme, adtConstructors);
+  if (constructors.isJust)
+    context =
+      addIdentsToScope(
+        map(
+          \ c::String -> name(alloc.ast.name ++ "_" ++ c, location=id.location),
+          constructors.fromJust),
+        Identifier_t,
+        context);
+  -- If the datatype hasn't been declared, then do nothing
+}
+| VarReference_t Datatype_t id::Identifier_t 'with' alloc::Identifier_c 'prefix' pfx::Identifier_c ';'
+  { top.ast = varReferenceDecl(fromId(id), alloc.ast); }
+action {
+  local constructors::Maybe<[String]> = lookupBy(stringEq, id.lexeme, adtConstructors);
+  if (constructors.isJust)
+    context =
+      addIdentsToScope(
+        map(
+          \ c::String -> name(pfx.ast.name ++ c, location=id.location),
+          constructors.fromJust),
+        Identifier_t,
+        context);
+  -- If the datatype hasn't been declared, then do nothing
+}
 | 'template' NonMarkingVarReference_t Datatype_t id::Identifier_t 'with' alloc::Identifier_c ';'
   { top.ast = templateVarReferenceDecl(fromId(id), alloc.ast); }
 action {
@@ -29,6 +55,20 @@ action {
       addIdentsToScope(
         map(
           \ c::String -> name(alloc.ast.name ++ "_" ++ c, location=id.location),
+          constructors.fromJust),
+        TemplateIdentifier_t,
+        context);
+  -- If the datatype hasn't been declared, then do nothing
+}
+| 'template' NonMarkingVarReference_t Datatype_t id::Identifier_t 'with' alloc::Identifier_c 'prefix' pfx::Identifier_c ';'
+  { top.ast = templateVarReferenceDecl(fromId(id), alloc.ast); }
+action {
+  local constructors::Maybe<[String]> = lookupBy(stringEq, id.lexeme, adtConstructors);
+  if (constructors.isJust)
+    context =
+      addIdentsToScope(
+        map(
+          \ c::String -> name(pfx.ast.name ++ c, location=id.location),
           constructors.fromJust),
         TemplateIdentifier_t,
         context);
