@@ -206,7 +206,7 @@ top::ExtType ::= ref::Decorated EnumDecl
 }
 
 aspect production refIdExtType
-top::ExtType ::= kwd::StructOrEnumOrUnion  n::String  refId::String
+top::ExtType ::= kwd::StructOrEnumOrUnion  _  refId::String
 {
   local topType::Type = extType(top.givenQualifiers, top);
   top.unifyErrors =
@@ -215,19 +215,19 @@ top::ExtType ::= kwd::StructOrEnumOrUnion  n::String  refId::String
       | structSEU(), extType(_, refIdExtType(structSEU(), otherName, otherRefId)) ->
         if refId == otherRefId
         then []
-        else [err(l, s"Unification struct types must match (got struct ${tagName}, struct ${otherName})")]
+        else [err(l, s"Unification struct types must match (got struct ${tagName}, struct ${fromMaybe("<anon>", otherName)})")]
       | structSEU(), extType(_, varType(extType(_, refIdExtType(structSEU(), otherName, otherRefId)))) ->
         if refId == otherRefId
         then []
-        else [err(l, s"Unification value and variable struct types must match (got struct ${tagName}, datatype ${otherName})")]
+        else [err(l, s"Unification value and variable struct types must match (got struct ${tagName}, datatype ${fromMaybe("<anon>", otherName)})")]
       | structSEU(), errorType() -> []
-      | structSEU(), t -> [err(l, s"Unification is not defined for struct ${n} and non-struct ${showType(t)}")]
+      | structSEU(), t -> [err(l, s"Unification is not defined for struct ${tagName} and non-struct ${showType(t)}")]
       | unionSEU(), _ -> [err(l, s"Unification is not defined for unions")]
       | enumSEU(), _ -> error("Unexpected enum refIdExtType")
       end ++
       case lookupRefId(refId, globalEnv(env)) of
       | structRefIdItem(struct) :: _ -> struct.unifyErrors(l, env)
-      | _ -> [err(l, s"struct ${n} does not have a (global) definition.")]
+      | _ -> [err(l, s"struct ${tagName} does not have a (global) definition.")]
       end;
   top.unifyProd =
     case top.otherType of
