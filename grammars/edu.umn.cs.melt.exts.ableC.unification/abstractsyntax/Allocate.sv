@@ -1,7 +1,7 @@
 grammar edu:umn:cs:melt:exts:ableC:unification:abstractsyntax;
 
 abstract production varReferenceDecl
-top::Decl ::= id::Name  allocator::Name
+top::Decl ::= id::Name  allocator::Name pfx::Maybe<Name>
 {
   top.pp = pp"var_reference datatype ${id.pp} with ${allocator.pp};";
   
@@ -42,6 +42,11 @@ top::Decl ::= id::Name  allocator::Name
   d.givenRefId = adtLookup.givenRefId;
   d.adtGivenName = adtLookup.adtGivenName;
   d.allocatorName = allocator;
+  d.allocatePfx =
+    case pfx of
+    | just(pfx) -> pfx.name
+    | nothing() -> allocator.name ++ "_"
+    end;
   
   forwards to
     if !null(adtLookupErrors)
@@ -52,7 +57,7 @@ top::Decl ::= id::Name  allocator::Name
 }
 
 abstract production templateVarReferenceDecl
-top::Decl ::= id::Name  allocator::Name
+top::Decl ::= id::Name  allocator::Name pfx::Maybe<Name>
 {
   top.pp = pp"template var_reference datatype ${id.pp} with ${allocator.pp};";
   
@@ -88,6 +93,11 @@ top::Decl ::= id::Name  allocator::Name
     | adtTemplateItem(params, adt) :: _ -> params
     end;
   d.allocatorName = allocator;
+  d.allocatePfx =
+    case pfx of
+    | just(pfx) -> pfx.name
+    | nothing() -> allocator.name ++ "_"
+    end;
   
   forwards to
     if !null(adtLookupErrors)
