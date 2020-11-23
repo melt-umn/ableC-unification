@@ -2,19 +2,21 @@ grammar edu:umn:cs:melt:exts:ableC:unification:abstractsyntax;
 
 import edu:umn:cs:melt:ableC:abstractsyntax:overloadable;
 
-abstract production freeVarExpr
-top::Expr ::= ty::TypeName allocator::Expr
-{
-  top.pp = pp"freevar<${ty.pp}>(${allocator.pp})";
-  
-  local expectedAllocatorType::Type =
+global expectedAllocatorType::Type =
+  pointerType(
+    nilQualifier(),
     functionType(
       pointerType(
         nilQualifier(),
         builtinType(nilQualifier(), voidType())),
       protoFunctionType([builtinType(nilQualifier(), unsignedType(longType()))], false),
-      nilQualifier());
-  
+      nilQualifier()));
+
+abstract production freeVarExpr
+top::Expr ::= ty::TypeName allocator::Expr
+{
+  top.pp = pp"freevar<${ty.pp}>(${allocator.pp})";
+
   local localErrors::[Message] =
     ty.errors ++ allocator.errors ++
     (if !ty.typerep.isCompleteType(addEnv(ty.defs, ty.env))
@@ -44,14 +46,6 @@ abstract production boundVarExpr
 top::Expr ::= allocator::Expr e::Expr
 {
   top.pp = pp"boundvar(${allocator.pp}, ${e.pp})";
-  
-  local expectedAllocatorType::Type =
-    functionType(
-      pointerType(
-        nilQualifier(),
-        builtinType(nilQualifier(), voidType())),
-      protoFunctionType([builtinType(nilQualifier(), unsignedType(longType()))], false),
-      nilQualifier());
   
   local localErrors::[Message] =
     allocator.errors ++ e.errors ++
