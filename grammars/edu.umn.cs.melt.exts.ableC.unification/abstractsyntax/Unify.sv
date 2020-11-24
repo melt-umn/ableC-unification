@@ -35,8 +35,8 @@ top::Expr ::= e1::Expr e2::Expr trail::MaybeExpr
     | seqStmt(_, declStmt(autoDecl(_, e2))) -> e2
     end;
   
-  local type::Type = decE1.typerep;
-  type.otherType = decE2.typerep;
+  local type::Type = decE1.typerep.defaultFunctionArrayLvalueConversion;
+  type.otherType = decE2.typerep.defaultFunctionArrayLvalueConversion;
   
   local localErrors::[Message] =
     decE1.errors ++ decE2.errors ++ trail.errors ++
@@ -82,9 +82,10 @@ top::Expr ::= e1::Expr e2::Expr trail::Expr
 {
   top.pp = pp"unifyVarVal(${e1.pp}, ${e2.pp}, ${trail.pp})";
   
+  local type::Type = varSubType(e1.typerep).mergeQualifiers(e2.typerep);
   forwards to
     ableC_Expr {
-      inst _unify_var_val<$directTypeExpr{e2.typerep}>($Expr{e1}, $Expr{e2}, $Expr{trail})
+      inst _unify_var_val<$directTypeExpr{type}>($Expr{e1}, $Expr{e2}, $Expr{trail})
     };
 }
 
@@ -93,9 +94,10 @@ top::Expr ::= e1::Expr e2::Expr trail::Expr
 {
   top.pp = pp"unifyValVar(${e1.pp}, ${e2.pp}, ${trail.pp})";
   
+  local type::Type = e1.typerep.mergeQualifiers(varSubType(e2.typerep));
   forwards to
     ableC_Expr {
-      inst _unify_var_val<$directTypeExpr{e1.typerep}>($Expr{e2}, $Expr{e1}, $Expr{trail})
+      inst _unify_var_val<$directTypeExpr{type}>($Expr{e2}, $Expr{e1}, $Expr{trail})
     };
 }
 
@@ -104,10 +106,10 @@ top::Expr ::= e1::Expr e2::Expr trail::Expr
 {
   top.pp = pp"unifyVarVar(${e1.pp}, ${e2.pp}, ${trail.pp})";
   
-  local e1SubType::Type = varSubType(e1.typerep);
+  local type::Type = varSubType(e1.typerep).mergeQualifiers(varSubType(e2.typerep));
   forwards to
     ableC_Expr {
-      inst _unify_var_var<$directTypeExpr{e1SubType}>($Expr{e1}, $Expr{e2}, $Expr{trail})
+      inst _unify_var_var<$directTypeExpr{type}>($Expr{e1}, $Expr{e2}, $Expr{trail})
     };
 }
 
