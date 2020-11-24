@@ -32,7 +32,7 @@ a value(a ?var) {
   match ((_var_d<a> *)var) {
     &_Free() -> {
       fprintf(stderr, "Error: Cannot access value of free variable\n");
-      exit(1);
+      abort();
     }
     &_Bound(val) -> {
       return val;
