@@ -35,8 +35,8 @@ top::Expr ::= e1::Expr e2::Expr trail::MaybeExpr
     | seqStmt(_, declStmt(autoDecl(_, e2))) -> e2
     end;
   
-  local type::Type = decE1.typerep;
-  type.otherType = decE2.typerep;
+  local type::Type = decE1.typerep.defaultFunctionArrayLvalueConversion;
+  type.otherType = decE2.typerep.defaultFunctionArrayLvalueConversion;
   
   local localErrors::[Message] =
     decE1.errors ++ decE2.errors ++ trail.errors ++
