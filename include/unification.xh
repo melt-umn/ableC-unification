@@ -44,11 +44,27 @@ a value(a ?var) {
 }
 
 template<typename a>
+a ?base_var(a ?var) {
+  match ((_var_d<a> *)var) {
+    &_Free() -> {
+      return var;
+    }
+    &_Bound(val) -> {
+      fprintf(stderr, "Error: Cannot access base of bound variable\n");
+      abort();
+    }
+    &_BoundVar(other_var) -> {
+      return base_var(other_var);
+    }
+  }
+}
+
+template<typename a>
 string show_var(a ?var) {
   match (var) {
     freevar -> {
       char buffer[24];
-      sprintf(buffer, "<var %x>", (union {a ?v; unsigned n;}){.v = var}.n);
+      sprintf(buffer, "<var %x>", (union {a ?v; unsigned n;}){.v = base_var(var)}.n);
       return str(buffer);
     }
     ?&val -> {
@@ -62,7 +78,7 @@ string str_var(a ?var) {
   match (var) {
     freevar -> {
       char buffer[24];
-      sprintf(buffer, "<var %x>", (union {a ?v; unsigned n;}){.v = var}.n);
+      sprintf(buffer, "<var %x>", (union {a ?v; unsigned n;}){.v = base_var(var)}.n);
       return str(buffer);
     }
     ?&val -> {
