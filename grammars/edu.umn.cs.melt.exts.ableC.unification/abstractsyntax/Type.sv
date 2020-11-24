@@ -142,12 +142,12 @@ top::ExtType ::= sub::Type
     \ l::Location env::Decorated Env ->
       case top.otherType of
       | extType(_, varType(otherSub)) ->
-        if compatibleTypes(sub, otherSub, false, false)
-        then decorate sub with {otherType = otherSub;}.unifyErrors(l, env)
+        if compatibleTypes(sub.defaultFunctionArrayLvalueConversion, otherSub.defaultFunctionArrayLvalueConversion, false, true)
+        then decorate sub.defaultFunctionArrayLvalueConversion with {otherType = otherSub.defaultFunctionArrayLvalueConversion;}.unifyErrors(l, env)
         else [err(l, s"Unification variable types must match (got ${showType(sub)}, ${showType(otherSub)})")]
       | t ->
-        if compatibleTypes(sub, t, false, false)
-        then decorate sub with {otherType = t;}.unifyErrors(l, env)
+        if compatibleTypes(sub.defaultFunctionArrayLvalueConversion, t, false, true)
+        then decorate sub.defaultFunctionArrayLvalueConversion with {otherType = t;}.unifyErrors(l, env)
         else [err(l, s"Unification variable and value types must match (got ${showType(sub)}, ${showType(t)})")]
       end;
   top.unifyProd =
@@ -189,7 +189,7 @@ top::ExtType ::= ref::Decorated EnumDecl
     \ l::Location env::Decorated Env ->
       case top.otherType of
       | extType(_, varType(sub)) ->
-        if compatibleTypes(topType, sub.defaultFunctionArrayLvalueConversion, false, false)
+        if compatibleTypes(topType, sub.defaultFunctionArrayLvalueConversion, false, true)
         then []
         else [err(l, s"Unification value and variable types must match (got ${showType(topType)}, ${showType(sub)})")]
       | t ->
