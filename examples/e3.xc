@@ -6,60 +6,75 @@
 typedef datatype Type ?Type;
 
 datatype Type {
+  Fn(Type, Type);
+  List(Type);
   Int();
-  List(Type elem);
-  Fn(Type param, Type res);
+  Bool();
 };
 
 var_reference datatype Type with GC_malloc;
+show Type with showType;
 
-string show_type(Type t) {
+string showType(Type t) {
   match (t) {
     freevar -> {
       char buffer[sizeof(short) * 2 + 2];
       sprintf(buffer, "a%hx", (union {Type t; short n;}){.t = t}.n);
       return str(buffer);
     }
+    ?&Fn(param@?&Fn(_, _), res) -> {
+      return "(" + showType(param) + ") -> " + showType(res);
+    }
+    ?&Fn(param, res) -> {
+      return showType(param) + " -> " + showType(res);
+    }
+    ?&List(elem) -> {
+      return "[" + showType(elem) + "]";
+    }
     ?&Int() -> {
       return str("int");
     }
-    ?&List(elem) -> {
-      return "[" + show_type(elem) + "]";
-    }
-    ?&Fn(param@?&Fn(_, _), res) -> {
-      return "(" + show_type(param) + ") -> " + show_type(res);
-    }
-    ?&Fn(param, res) -> {
-      return show_type(param) + " -> " + show_type(res);
+    ?&Bool() -> {
+      return str("bool");
     }
   }
 }
 
+Type freshType() {
+  return freevar<datatype Type>(GC_malloc);
+}
+
+Type appType(Type f, Type a) {
+  Type res = freshType();
+  if (!unify(f, Fn(a, res))) {
+    printf("Type error applying %s to %s\n", show(f).text, show(a).text);
+    exit(1);
+  }
+  return res;
+}
+
+// This example doesn't do freshening - see ableC-rewriting/examples/e3.xc
+
 int main() {
   // map :: (a -> b) -> [a] -> [b]
-  Type a = freevar<datatype Type>(GC_malloc);
-  Type b = freevar<datatype Type>(GC_malloc);
+  Type a = freshType();
+  Type b = freshType();
   Type map = GC_malloc_Fn(GC_malloc_Fn(a, b), GC_malloc_Fn(GC_malloc_List(a), GC_malloc_List(b)));
-  printf("map :: %s\n", show_type(map).text);
+  printf("map :: %s\n", show(map).text);
 
   // length :: [c] -> int
-  Type c = freevar<datatype Type>(GC_malloc);
+  Type c = freshType();
   Type length = GC_malloc_Fn(GC_malloc_List(c), GC_malloc_Int());
-  printf("length :: %s\n", show_type(length).text);
+  printf("length :: %s\n", show(length).text);
 
   // res = map length
-  Type res = freevar<datatype Type>(GC_malloc);
-  if (unify(map, GC_malloc_Fn(length, res))) {
-    printf("map length :: %s\n", show_type(res).text);
-  } else {
-    printf("type error\n");
-    return 1;
-  }
+  Type res = appType(map, length);
+  printf("map length :: %s\n", show(res).text);
 
   // res :: int -> int
   // Should fail
   if (unify(res, GC_malloc_Fn(GC_malloc_Int(), GC_malloc_Int()))) {
-    printf("res :: %s\n", show_type(res).text);
+    printf("res :: %s\n", show(res).text);
     return 2;
   } else {
     printf("type error\n");
