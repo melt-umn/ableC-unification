@@ -44,6 +44,22 @@ a value(a ?var) {
 }
 
 template<typename a>
+a value_loc(a ?var, const char *loc) {
+  match ((_var_d<a> *)var) {
+    &_Free() -> {
+      fprintf(stderr, "Error: Value demanded of free variable at %s\n", loc);
+      abort();
+    }
+    &_Bound(val) -> {
+      return val;
+    }
+    &_BoundVar(other_var) -> {
+      return value(other_var);
+    }
+  }
+}
+
+template<typename a>
 a ?base_var(a ?var) {
   match ((_var_d<a> *)var) {
     &_Free() -> {
