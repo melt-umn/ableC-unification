@@ -126,11 +126,16 @@ top::ExtType ::= sub::Type
   
   top.showErrors =
     \ l::Location env::Decorated Env ->
-      sub.showErrors(l, env) ++
+      showErrors(l, env, sub) ++
+      case sub.maybeRefId of
+      | just(refId) when lookupRefId(refId, globalEnv(env)) matches [] ->
+        [err(l, s"${showType(sub)} does not have a (global) definition.")]
+      | _ -> []
+      end ++
       checkUnificationHeaderTemplateDef("show_var", l, env);
   top.strErrors =
     \ l::Location env::Decorated Env ->
-      sub.showErrors(l, env) ++
+      sub.strErrors(l, env) ++
       checkUnificationHeaderTemplateDef("str_var", l, env);
   top.showProd =
     \ e::Expr -> ableC_Expr { inst show_var<$directTypeExpr{sub}>($Expr{e}) };

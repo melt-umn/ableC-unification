@@ -59,7 +59,7 @@ top::Expr ::= allocator::Expr e::Expr
       proto_typedef _var_d;
       ({inst _var_d<$directTypeExpr{e.typerep}> *_result =
           $Expr{allocator}(sizeof(inst _var_d<$directTypeExpr{e.typerep}>));
-        *_result = inst _Bound<$directTypeExpr{e.typerep}>($Expr{e});
+        *_result = inst _Bound<$directTypeExpr{e.typerep}>($Expr{e}); // TODO: redecoration here!
         ($TypeName{
            typeName(
              directTypeExpr(e.typerep),
