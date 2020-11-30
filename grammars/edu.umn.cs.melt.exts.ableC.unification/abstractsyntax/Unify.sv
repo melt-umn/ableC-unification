@@ -1,5 +1,27 @@
 grammar edu:umn:cs:melt:exts:ableC:unification:abstractsyntax;
 
+aspect function getInitialEnvDefs
+[Def] ::=
+{
+  d <-
+    [valueDef(
+       "unify",
+       builtinFunctionValueItem(
+         functionType(builtinType(nilQualifier(), boolType()), noProtoFunctionType(), nilQualifier()),
+         unifyCallExpr(_, _, location=_)))];
+}
+
+abstract production unifyCallExpr
+top::Expr ::= f::Name a::Exprs
+{
+  forwards to
+    case a of
+    | consExpr(e1, consExpr(e2, nilExpr())) -> unifyExpr(e1, e2, nothingExpr(), location=top.location)
+    | consExpr(e1, consExpr(e2, consExpr(t, nilExpr()))) -> unifyExpr(e1, e2, justExpr(t), location=top.location)
+    | _ -> errorExpr([err(top.location, s"${f.name} expected 2 or 3 arguments, got ${toString(a.count)}")], location=top.location)
+    end;
+}
+
 abstract production unifyExpr
 top::Expr ::= e1::Expr e2::Expr trail::MaybeExpr
 {
