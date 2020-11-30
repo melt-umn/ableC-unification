@@ -13,7 +13,6 @@ datatype Type {
 };
 
 var_reference datatype Type with GC_malloc;
-show Type with showType;
 
 string showType(Type t) {
   match (t) {
@@ -39,6 +38,8 @@ string showType(Type t) {
     }
   }
 }
+
+show Type with showType;
 
 Type freshType() {
   return freevar<datatype Type>(GC_malloc);

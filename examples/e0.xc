@@ -36,7 +36,7 @@ int main() {
   string ?d = freevar<string>(alloca);
   bool res6 = unify(d, str("hello"));
   printf("unify 6: %d\n", res6);
-  printf("%s %d %s\n", show(c).text, is_bound(d), is_bound(d)? value(d).text : "fail");
+  printf("%s %d %s\n", show(d).text, is_bound(d), is_bound(d)? value(d).text : "fail");
 
   int ?e = boundvar(alloca, 42);
   printf("%s %d %d\n", show(e).text, is_bound(e), is_bound(e)? value(e) : -1);
