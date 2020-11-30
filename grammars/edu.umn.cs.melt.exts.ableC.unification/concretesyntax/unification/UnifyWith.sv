@@ -4,7 +4,7 @@ import edu:umn:cs:melt:ableC:abstractsyntax:construction;
 import edu:umn:cs:melt:exts:ableC:string:concretesyntax; -- 'with', TagKeyword_c
 import silver:langutil;
 
-terminal Unify_t 'unify' lexer classes {Global, Keyword};
+marking terminal Unify_t 'unify' lexer classes {Global, Keyword};
 
 concrete productions top::Declaration_c
 | 'unify' '(' ty::TypeName_c ')' 'with' unify::Identifier_t
