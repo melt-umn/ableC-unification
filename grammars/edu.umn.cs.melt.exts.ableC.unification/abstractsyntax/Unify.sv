@@ -66,37 +66,41 @@ top::Expr ::= e1::Expr e2::Expr trail::MaybeExpr
     unifyErrors(top.location, addEnv(dcls.defs, dcls.env), type1, type2) ++
     checkUnificationHeaderDef("unification_trail", top.location, top.env);
   
-  local fwrd::Expr =
-    case getCustomUnify(type1, type2, top.env) of
-    | just(unify) ->
-        ableC_Expr {
-          $Name{unify}($Expr{decExpr(decE1, location=decE1.location)},
-                       $Expr{decExpr(decE2, location=decE2.location)},
-                       $Expr{trailExpr})
-        }
-    | nothing() ->
-        case decE1.isSimple, decE2.isSimple, dcls of
-        | true, true, _ -> type1.unifyProd(e1, e2, trailExpr, top.location)
-        | true, false, seqStmt(_, d) ->
-          stmtExpr(
-            decStmt(d),
-            type1.unifyProd(e1, declRefExpr(tmpName2, location=builtin), trailExpr, top.location),
-            location=builtin)
-        | false, true, seqStmt(d, _) ->
-          stmtExpr(
-            decStmt(d),
-            type1.unifyProd(declRefExpr(tmpName1, location=builtin), e2, trailExpr, top.location),
-            location=builtin)
-        | false, false, _ ->
-          stmtExpr(
-            decStmt(dcls),
-            type1.unifyProd(
-              declRefExpr(tmpName1, location=builtin),
-              declRefExpr(tmpName2, location=builtin),
-              trailExpr, top.location),
-            location=builtin)
-        end
+  local customUnifyProd::Maybe<(Expr ::= Expr Expr Expr Location)> =
+    getCustomUnify(type1, type2, top.env);
+  local unifyProd::(Expr ::= Expr Expr Expr Location) = fromMaybe(type1.unifyProd, customUnifyProd);
+  
+  local trans::Expr =
+    case decE1.isSimple, decE2.isSimple, dcls of
+    | true, true, _ -> unifyProd(e1, e2, trailExpr, top.location)
+    | true, false, seqStmt(_, d) ->
+      stmtExpr(
+        decStmt(d),
+        unifyProd(e1, declRefExpr(tmpName2, location=builtin), trailExpr, top.location),
+        location=builtin)
+    | false, true, seqStmt(d, _) ->
+      stmtExpr(
+        decStmt(d),
+        unifyProd(declRefExpr(tmpName1, location=builtin), e2, trailExpr, top.location),
+        location=builtin)
+    | false, false, _ ->
+      stmtExpr(
+        decStmt(dcls),
+        unifyProd(
+          declRefExpr(tmpName1, location=builtin),
+          declRefExpr(tmpName2, location=builtin),
+          trailExpr, top.location),
+        location=builtin)
     end;
+  
+  local fwrd::Expr =
+    if customUnifyProd.isJust
+    then trans
+    else
+      injectGlobalDeclsExpr(
+        foldDecl([defsDecl([customUnifyDef(type1, type2, type1.unifyProd)])]),
+        trans,
+        location=builtin);
   
   forwards to mkErrorCheck(localErrors, fwrd);
 }
