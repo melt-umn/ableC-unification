@@ -57,38 +57,58 @@ top::Expr ::= e1::Expr e2::Expr trail::MaybeExpr
     | seqStmt(_, declStmt(autoDecl(_, e2))) -> e2
     end;
   
-  local type::Type = decE1.typerep.defaultFunctionArrayLvalueConversion;
-  type.otherType = decE2.typerep.defaultFunctionArrayLvalueConversion;
+  local type1::Type = decE1.typerep.defaultFunctionArrayLvalueConversion;
+  local type2::Type = decE2.typerep.defaultFunctionArrayLvalueConversion;
+  type1.otherType = type2;
   
   local localErrors::[Message] =
     decE1.errors ++ decE2.errors ++ trail.errors ++
-    type.unifyErrors(top.location, addEnv(dcls.defs, dcls.env)) ++
+    unifyErrors(top.location, addEnv(dcls.defs, dcls.env), type1, type2) ++
     checkUnificationHeaderDef("unification_trail", top.location, top.env);
   
   local fwrd::Expr =
-    case decE1.isSimple, decE2.isSimple, dcls of
-    | true, true, _ -> type.unifyProd(e1, e2, trailExpr, top.location)
-    | true, false, seqStmt(_, d) ->
-      stmtExpr(
-        decStmt(d),
-        type.unifyProd(e1, declRefExpr(tmpName2, location=builtin), trailExpr, top.location),
-        location=builtin)
-    | false, true, seqStmt(d, _) ->
-      stmtExpr(
-        decStmt(d),
-        type.unifyProd(declRefExpr(tmpName1, location=builtin), e2, trailExpr, top.location),
-        location=builtin)
-    | false, false, _ ->
-      stmtExpr(
-        decStmt(dcls),
-        type.unifyProd(
-          declRefExpr(tmpName1, location=builtin),
-          declRefExpr(tmpName2, location=builtin),
-          trailExpr, top.location),
-        location=builtin)
+    case getCustomUnify(type1, type2, top.env) of
+    | just(unify) ->
+        ableC_Expr {
+          $Name{unify}($Expr{decExpr(decE1, location=decE1.location)},
+                       $Expr{decExpr(decE2, location=decE2.location)},
+                       $Expr{trailExpr})
+        }
+    | nothing() ->
+        case decE1.isSimple, decE2.isSimple, dcls of
+        | true, true, _ -> type1.unifyProd(e1, e2, trailExpr, top.location)
+        | true, false, seqStmt(_, d) ->
+          stmtExpr(
+            decStmt(d),
+            type1.unifyProd(e1, declRefExpr(tmpName2, location=builtin), trailExpr, top.location),
+            location=builtin)
+        | false, true, seqStmt(d, _) ->
+          stmtExpr(
+            decStmt(d),
+            type1.unifyProd(declRefExpr(tmpName1, location=builtin), e2, trailExpr, top.location),
+            location=builtin)
+        | false, false, _ ->
+          stmtExpr(
+            decStmt(dcls),
+            type1.unifyProd(
+              declRefExpr(tmpName1, location=builtin),
+              declRefExpr(tmpName2, location=builtin),
+              trailExpr, top.location),
+            location=builtin)
+        end
     end;
   
   forwards to mkErrorCheck(localErrors, fwrd);
+}
+
+function unifyErrors
+[Message] ::= l::Location  env::Decorated Env  t1::Type  t2::Type
+{
+  t1.otherType = t2;
+  return case getCustomUnify(t1, t2, env) of
+  | just(_) -> []
+  | nothing() -> t1.unifyErrors(l, env)
+  end;
 }
 
 abstract production defaultUnifyExpr
@@ -270,9 +290,7 @@ top::StructDeclarators ::=
 aspect production structField
 top::StructDeclarator ::= name::Name  ty::TypeModifierExpr  attrs::Attributes
 {
-  local type::Type = top.typerep;
-  type.otherType = type;
-  top.unifyErrors = \ Location env::Decorated Env -> type.unifyErrors(top.sourceLocation, env);
+  top.unifyErrors = \ Location env::Decorated Env -> unifyErrors(top.sourceLocation, env, top.typerep, top.typerep);
   top.unifyTransform =
     unifyExpr(
       ableC_Expr { s1.$Name{name} },
@@ -283,9 +301,7 @@ top::StructDeclarator ::= name::Name  ty::TypeModifierExpr  attrs::Attributes
 aspect production structBitfield
 top::StructDeclarator ::= name::MaybeName  ty::TypeModifierExpr  e::Expr  attrs::Attributes
 {
-  local type::Type = top.typerep;
-  type.otherType = type;
-  top.unifyErrors = \ Location env::Decorated Env -> type.unifyErrors(top.sourceLocation, env);
+  top.unifyErrors = \ Location env::Decorated Env -> unifyErrors(top.sourceLocation, env, top.typerep, top.typerep);
   top.unifyTransform =
     case name of
     | justName(n) ->
@@ -431,9 +447,7 @@ attribute unifyTransform<Expr> occurs on ParameterDecl;
 aspect production parameterDecl
 top::ParameterDecl ::= storage::StorageClasses  bty::BaseTypeExpr  mty::TypeModifierExpr  n::MaybeName  attrs::Attributes
 {
-  local type::Type = top.typerep;
-  type.otherType = type;
-  top.unifyErrors = \ Location env::Decorated Env -> type.unifyErrors(top.sourceLocation, env);
+  top.unifyErrors = \ Location env::Decorated Env -> unifyErrors(top.sourceLocation, env, top.typerep, top.typerep);
   
   local varName1::Name = name(fieldName.name ++ "1", location=builtin);
   local varName2::Name = name(fieldName.name ++ "2", location=builtin);

@@ -61,10 +61,14 @@ top::Def ::= typeName::String  showFunctionName::Name
 }
 
 function getCustomUnify
-Maybe<Name> ::= t::Type  e::Decorated Env
+Maybe<Name> ::= t1::Type  t2::Type  e::Decorated Env
 {
-  return case lookupScope(t.mangledName, e.customUnifys) of
-  | [] -> nothing()
-  | customUnify :: _ -> just(customUnify)
-  end;
+  return
+    if compatibleTypes(t1, t2, false, false) then
+      case lookupScope(t1.mangledName, e.customUnifys) of
+      | [] -> nothing()
+      | customUnify :: _ -> just(customUnify)
+      end
+    else
+      nothing();
 }
