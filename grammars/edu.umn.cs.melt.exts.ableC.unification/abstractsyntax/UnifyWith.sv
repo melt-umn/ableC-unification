@@ -24,10 +24,8 @@ top::Decl ::= ty::TypeName  func::Name
     if !null(unificationTrailTypes) && !compatibleTypes(fnType, expectedFnType, false, false)
     then [err(func.location, s"unify function for ${showType(type)} must have type ${showType(expectedFnType)} (got ${showType(fnType)})")]
     else [];
-  local prod::(Expr ::= Expr Expr Expr Location) = \ e1::Expr e2::Expr t::Expr Location ->
-    ableC_Expr { $Name{func}($Expr{e1}, $Expr{e2}, $Expr{t}) };
   forwards to
     if null(localErrors)
-    then defsDecl([customUnifyDef(type, type, prod)])
-    else warnDecl(localErrors);
+      then defsDecl([customUnifyDef(type.mangledName, func)])
+      else warnDecl(localErrors);
 }
