@@ -5,7 +5,7 @@ import edu:umn:cs:melt:ableC:abstractsyntax:overloadable;
 abstract production varTypeExpr
 top::TypeModifierExpr ::= q::Qualifiers sub::TypeModifierExpr loc::Location
 {
-  top.lpp = pp" ? ${terminate(space(), q.pps)}${sub.lpp}";
+  top.lpp = pp"${sub.lpp} ${terminate(space(), q.pps)}";
   top.rpp = sub.rpp;
   top.isFunctionArrayTypeExpr = false;
   

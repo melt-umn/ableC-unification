@@ -54,7 +54,7 @@ top::Expr ::= allocator::Expr e::Expr
      else []) ++
     checkUnificationHeaderTemplateDef("_var_d", top.location, top.env);
   
-  local type::Type = e.typerep.defaultFunctionArrayLvalueConversion;
+  local type::Type = e.typerep.defaultFunctionArrayLvalueConversion.canonicalType;
   local fwrd::Expr =
     ableC_Expr {
       proto_typedef _var_d;
