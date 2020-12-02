@@ -54,15 +54,16 @@ top::Expr ::= allocator::Expr e::Expr
      else []) ++
     checkUnificationHeaderTemplateDef("_var_d", top.location, top.env);
   
+  local type::Type = e.typerep.defaultFunctionArrayLvalueConversion;
   local fwrd::Expr =
     ableC_Expr {
       proto_typedef _var_d;
-      ({inst _var_d<$directTypeExpr{e.typerep}> *_result =
-          $Expr{allocator}(sizeof(inst _var_d<$directTypeExpr{e.typerep}>));
-        *_result = inst _Bound<$directTypeExpr{e.typerep}>($Expr{e}); // TODO: redecoration here!
+      ({inst _var_d<$directTypeExpr{type}> *_result =
+          $Expr{allocator}(sizeof(inst _var_d<$directTypeExpr{type}>));
+        *_result = inst _Bound<$directTypeExpr{type}>($Expr{e}); // TODO: redecoration here!
         ($TypeName{
            typeName(
-             directTypeExpr(e.typerep),
+             directTypeExpr(type),
              varTypeExpr(nilQualifier(), baseTypeExpr(), builtin))})_result;})
     };
   
