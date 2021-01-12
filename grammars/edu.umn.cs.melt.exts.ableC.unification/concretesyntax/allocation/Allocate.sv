@@ -22,7 +22,7 @@ concrete productions top::Declaration_c
 | VarReference_t Datatype_t id::Identifier_t 'with' alloc::Identifier_c ';'
   { top.ast = varReferenceDecl(fromId(id), alloc.ast, nothing()); }
 action {
-  local constructors::Maybe<[String]> = lookupBy(stringEq, id.lexeme, adtConstructors);
+  local constructors::Maybe<[String]> = lookup(id.lexeme, adtConstructors);
   if (constructors.isJust)
     context =
       addIdentsToScope(
@@ -36,7 +36,7 @@ action {
 | VarReference_t Datatype_t id::Identifier_t 'with' alloc::Identifier_t 'prefix' pfx::Identifier_c ';'
   { top.ast = varReferenceDecl(fromId(id), fromId(alloc), just(pfx.ast)); }
 action {
-  local constructors::Maybe<[String]> = lookupBy(stringEq, id.lexeme, adtConstructors);
+  local constructors::Maybe<[String]> = lookup(id.lexeme, adtConstructors);
   if (constructors.isJust)
     context =
       addIdentsToScope(
@@ -50,7 +50,7 @@ action {
 | 'template' NonMarkingVarReference_t Datatype_t id::Identifier_t 'with' alloc::Identifier_c ';'
   { top.ast = templateVarReferenceDecl(fromId(id), alloc.ast, nothing()); }
 action {
-  local constructors::Maybe<[String]> = lookupBy(stringEq, id.lexeme, adtConstructors);
+  local constructors::Maybe<[String]> = lookup(id.lexeme, adtConstructors);
   if (constructors.isJust)
     context =
       addIdentsToScope(
@@ -64,7 +64,7 @@ action {
 | 'template' NonMarkingVarReference_t Datatype_t id::Identifier_t 'with' alloc::Identifier_t 'prefix' pfx::Identifier_c ';'
   { top.ast = templateVarReferenceDecl(fromId(id), fromId(alloc), just(pfx.ast)); }
 action {
-  local constructors::Maybe<[String]> = lookupBy(stringEq, id.lexeme, adtConstructors);
+  local constructors::Maybe<[String]> = lookup(id.lexeme, adtConstructors);
   if (constructors.isJust)
     context =
       addIdentsToScope(
