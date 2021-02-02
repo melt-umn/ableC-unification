@@ -55,9 +55,9 @@ top::Def ::=
 }
 
 abstract production customUnifyDef
-top::Def ::= typeName::String  showFunctionName::Name
+top::Def ::= t::Type showFunctionName::Name
 {
-  top.customUnifyContribs = [pair(typeName, showFunctionName)];
+  top.customUnifyContribs = [pair(t.withoutTypeQualifiers.mangledName, showFunctionName)];
 }
 
 function getCustomUnify
@@ -65,7 +65,7 @@ Maybe<Name> ::= t1::Type  t2::Type  e::Decorated Env
 {
   return
     if compatibleTypes(t1, t2, false, false) then
-      case lookupScope(t1.mangledName, e.customUnifys) of
+      case lookupScope(t1.withoutTypeQualifiers.mangledName, e.customUnifys) of
       | [] -> nothing()
       | customUnify :: _ -> just(customUnify)
       end
