@@ -47,6 +47,8 @@ top::Expr ::= e1::Expr e2::Expr trail::MaybeExpr
     };
   dcls.env = top.env;
   dcls.returnType = top.returnType;
+  dcls.breakValid = top.breakValid;
+  dcls.continueValid = top.continueValid;
   
   local decE1::Decorated Expr =
     case dcls of

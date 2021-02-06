@@ -21,6 +21,8 @@ top::Pattern ::=
     };
   isBound.env = top.env;
   isBound.returnType = top.returnType;
+  isBound.breakValid = top.breakValid;
+  isBound.continueValid = top.continueValid;
   top.defs <- isBound.defs;
   
   top.transform = decExpr(isBound, location=builtin);
@@ -48,6 +50,8 @@ top::Pattern ::= p::Pattern
     };
   isBound.env = top.env;
   isBound.returnType = nothing();
+  isBound.breakValid = false;
+  isBound.continueValid = false;
   top.defs <- isBound.defs;
   
   -- Store the result in a temporary variable since p.transformIn may be used more than once.
@@ -59,6 +63,8 @@ top::Pattern ::= p::Pattern
     };
   valueDecl.env = addEnv(isBound.defs, openScopeEnv(isBound.env));
   valueDecl.returnType = nothing();
+  valueDecl.breakValid = false;
+  valueDecl.continueValid = false;
   top.defs <- valueDecl.defs;
   
   p.env = addEnv(valueDecl.defs, valueDecl.env);
