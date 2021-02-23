@@ -49,14 +49,17 @@ top::Expr ::= e1::Expr e2::Expr trail::MaybeExpr
   dcls.returnType = top.returnType;
   dcls.breakValid = top.breakValid;
   dcls.continueValid = top.continueValid;
-  
+
+  -- TODO: replace with pattern-decoration syntax
   local decE1::Decorated Expr =
     case dcls of
     | seqStmt(declStmt(autoDecl(_, e1)), _) -> e1
+    | _ -> error("Invalid structure for dcls")
     end;
   local decE2::Decorated Expr =
     case dcls of
     | seqStmt(_, declStmt(autoDecl(_, e2))) -> e2
+    | _ -> error("Invalid structure for dcls")
     end;
   
   local type1::Type = decE1.typerep.defaultFunctionArrayLvalueConversion;
@@ -97,6 +100,7 @@ top::Expr ::= e1::Expr e2::Expr trail::MaybeExpr
               declRefExpr(tmpName2, location=builtin),
               trailExpr, top.location),
             location=builtin)
+        | _, _, _ -> error("Invalid structure for dcls")
         end
     end;
   
@@ -174,6 +178,7 @@ top::Expr ::= e1::Expr e2::Expr trail::Expr
   local struct::Decorated StructDecl =
     case structLookup of
     | structRefIdItem(struct) :: _ -> struct
+    | _ -> error("struct demanded when not an structRefIdItem")
     end;
   
   forwards to
@@ -336,6 +341,7 @@ top::Expr ::= e1::Expr e2::Expr trail::Expr
   local adt::Decorated ADTDecl =
     case adtLookup of
     | adtRefIdItem(adt) :: _ -> adt
+    | _ -> error("adt demanded when not an adtRefIdItem")
     end;
   
   forwards to

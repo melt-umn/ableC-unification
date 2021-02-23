@@ -238,7 +238,7 @@ top::ExtType ::= kwd::StructOrEnumOrUnion  _  refId::String
     case top.otherType of
     | extType(_, refIdExtType(_, _, _)) -> structUnifyExpr(_, _, _, location=_)
     | extType(_, varType(_)) -> valVarUnifyExpr(_, _, _, location=_)
-    | errorType() -> \ Expr Expr Expr l::Location -> errorExpr([], location=l)
+    | _ -> \ Expr Expr Expr l::Location -> errorExpr([], location=l)
     end;
 }
 
@@ -268,7 +268,7 @@ top::ExtType ::= adtName::String adtDeclName::String refId::String
     case top.otherType of
     | extType(_, adtExtType(_, _, _)) -> adtUnifyExpr(_, _, _, location=_)
     | extType(_, varType(_)) -> valVarUnifyExpr(_, _, _, location=_)
-    | errorType() -> \ Expr Expr Expr l::Location -> errorExpr([], location=l)
+    | _ -> \ Expr Expr Expr l::Location -> errorExpr([], location=l)
     end;
 }
 

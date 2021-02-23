@@ -32,7 +32,9 @@ top::Decl ::= id::Name  allocator::Name pfx::Maybe<Name>
     | adtRefIdTagItem(refId) ->
       case lookupRefId(refId, top.env) of
       | adtRefIdItem(d) :: _ -> d
+      | _ -> error("adtLookup demanded when not an adtRefIdItem")
       end
+    | _ -> error("adtLookup demanded when not an adtRefIdTagItem")
     end;
   -- Re-decorate the found ADT decl, also supplying the allocator name
   local d::ADTDecl = new(adtLookup);
@@ -84,6 +86,7 @@ top::Decl ::= id::Name  allocator::Name pfx::Maybe<Name>
   local adtLookup::Decorated ADTDecl =
     case lookupTemplate(id.name, top.env) of
     | adtTemplateItem(params, adt) :: _ -> adt
+    | _ -> error("adtLookup demanded when not an adtTemplateItem")
     end;
   -- Re-decorate the found ADT decl, also supplying the allocator name
   local d::ADTDecl = new(adtLookup);
@@ -95,6 +98,7 @@ top::Decl ::= id::Name  allocator::Name pfx::Maybe<Name>
   d.templateParameters =
     case lookupTemplate(id.name, top.env) of
     | adtTemplateItem(params, adt) :: _ -> params
+    | _ -> error("templateParameters demanded when not an adtTemplateItem")
     end;
   d.allocatorName = allocator;
   d.allocatePfx =
