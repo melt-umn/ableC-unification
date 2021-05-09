@@ -20,9 +20,7 @@ top::Pattern ::=
         !is_bound($Expr{top.transformIn});})
     };
   isBound.env = top.env;
-  isBound.returnType = top.returnType;
-  isBound.breakValid = top.breakValid;
-  isBound.continueValid = top.continueValid;
+  isBound.controlStmtContext = top.controlStmtContext;
   top.defs <- isBound.defs;
   
   top.transform = decExpr(isBound, location=builtin);
@@ -49,9 +47,7 @@ top::Pattern ::= p::Pattern
         is_bound($Expr{top.transformIn});})
     };
   isBound.env = top.env;
-  isBound.returnType = nothing();
-  isBound.breakValid = false;
-  isBound.continueValid = false;
+  isBound.controlStmtContext = initialControlStmtContext;
   top.defs <- isBound.defs;
   
   -- Store the result in a temporary variable since p.transformIn may be used more than once.
@@ -62,9 +58,7 @@ top::Pattern ::= p::Pattern
       $directTypeExpr{subType} $name{tempName} = value($Expr{top.transformIn});
     };
   valueDecl.env = addEnv(isBound.defs, openScopeEnv(isBound.env));
-  valueDecl.returnType = nothing();
-  valueDecl.breakValid = false;
-  valueDecl.continueValid = false;
+  valueDecl.controlStmtContext = initialControlStmtContext;
   top.defs <- valueDecl.defs;
   
   p.env = addEnv(valueDecl.defs, valueDecl.env);

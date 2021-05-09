@@ -46,9 +46,7 @@ top::Expr ::= e1::Expr e2::Expr trail::MaybeExpr
       $Decl{autoDecl(tmpName2, e2)}
     };
   dcls.env = top.env;
-  dcls.returnType = top.returnType;
-  dcls.breakValid = top.breakValid;
-  dcls.continueValid = top.continueValid;
+  dcls.controlStmtContext = top.controlStmtContext;
 
   -- TODO: replace with pattern-decoration syntax
   local decE1::Decorated Expr =
