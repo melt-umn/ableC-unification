@@ -5,7 +5,7 @@ import edu:umn:cs:melt:ableC:abstractsyntax:overloadable;
 abstract production varTypeExpr
 top::TypeModifierExpr ::= q::Qualifiers sub::TypeModifierExpr loc::Location
 {
-  top.lpp = pp" ? ${terminate(space(), q.pps)}${sub.lpp}";
+  top.lpp = pp"${sub.lpp} ${terminate(space(), q.pps)}";
   top.rpp = sub.rpp;
   top.isFunctionArrayTypeExpr = false;
   
@@ -59,7 +59,7 @@ top::Type ::=
     \ l::Location env::Decorated Env ->
       case top.otherType of
       | extType(_, varType(sub)) ->
-        if compatibleTypes(top, sub, false, false)
+        if compatibleTypes(top, sub.defaultFunctionArrayLvalueConversion, false, false)
         then decorate top with {otherType = sub;}.unifyErrors(l, env)
         else [err(l, s"Unification value and variable types must match (got ${showType(top)}, ${showType(sub)})")]
       | t ->
@@ -126,11 +126,16 @@ top::ExtType ::= sub::Type
   
   top.showErrors =
     \ l::Location env::Decorated Env ->
-      sub.showErrors(l, env) ++
+      showErrors(l, env, sub) ++
+      case sub.maybeRefId of
+      | just(refId) when lookupRefId(refId, globalEnv(env)) matches [] ->
+        [err(l, s"${showType(sub)} does not have a (global) definition.")]
+      | _ -> []
+      end ++
       checkUnificationHeaderTemplateDef("show_var", l, env);
   top.strErrors =
     \ l::Location env::Decorated Env ->
-      sub.showErrors(l, env) ++
+      sub.strErrors(l, env) ++
       checkUnificationHeaderTemplateDef("str_var", l, env);
   top.showProd =
     \ e::Expr -> ableC_Expr { inst show_var<$directTypeExpr{sub}>($Expr{e}) };
@@ -142,12 +147,12 @@ top::ExtType ::= sub::Type
     \ l::Location env::Decorated Env ->
       case top.otherType of
       | extType(_, varType(otherSub)) ->
-        if compatibleTypes(sub, otherSub, false, false)
-        then decorate sub with {otherType = otherSub;}.unifyErrors(l, env)
+        if compatibleTypes(sub.defaultFunctionArrayLvalueConversion, otherSub.defaultFunctionArrayLvalueConversion, false, true)
+        then decorate sub.defaultFunctionArrayLvalueConversion with {otherType = otherSub.defaultFunctionArrayLvalueConversion;}.unifyErrors(l, env)
         else [err(l, s"Unification variable types must match (got ${showType(sub)}, ${showType(otherSub)})")]
       | t ->
-        if compatibleTypes(sub, t, false, false)
-        then decorate sub with {otherType = t;}.unifyErrors(l, env)
+        if compatibleTypes(sub.defaultFunctionArrayLvalueConversion, t, false, true)
+        then decorate sub.defaultFunctionArrayLvalueConversion with {otherType = t;}.unifyErrors(l, env)
         else [err(l, s"Unification variable and value types must match (got ${showType(sub)}, ${showType(t)})")]
       end;
   top.unifyProd =
@@ -165,7 +170,7 @@ top::ExtType ::=
     \ l::Location env::Decorated Env ->
       case top.otherType of
       | extType(_, varType(sub)) ->
-        if compatibleTypes(extType(nilQualifier(), stringType()), sub, false, true)
+        if compatibleTypes(extType(nilQualifier(), stringType()), sub.defaultFunctionArrayLvalueConversion, false, true)
         then []
         else [err(l, s"Unification value and variable types must match (got string, ${showType(sub)})")]
       | t ->
@@ -189,7 +194,7 @@ top::ExtType ::= ref::Decorated EnumDecl
     \ l::Location env::Decorated Env ->
       case top.otherType of
       | extType(_, varType(sub)) ->
-        if compatibleTypes(topType, sub, false, false)
+        if compatibleTypes(topType, sub.defaultFunctionArrayLvalueConversion, false, true)
         then []
         else [err(l, s"Unification value and variable types must match (got ${showType(topType)}, ${showType(sub)})")]
       | t ->
@@ -206,7 +211,7 @@ top::ExtType ::= ref::Decorated EnumDecl
 }
 
 aspect production refIdExtType
-top::ExtType ::= kwd::StructOrEnumOrUnion  n::String  refId::String
+top::ExtType ::= kwd::StructOrEnumOrUnion  _  refId::String
 {
   local topType::Type = extType(top.givenQualifiers, top);
   top.unifyErrors =
@@ -215,25 +220,25 @@ top::ExtType ::= kwd::StructOrEnumOrUnion  n::String  refId::String
       | structSEU(), extType(_, refIdExtType(structSEU(), otherName, otherRefId)) ->
         if refId == otherRefId
         then []
-        else [err(l, s"Unification struct types must match (got struct ${n}, struct ${otherName})")]
+        else [err(l, s"Unification struct types must match (got struct ${tagName}, struct ${fromMaybe("<anon>", otherName)})")]
       | structSEU(), extType(_, varType(extType(_, refIdExtType(structSEU(), otherName, otherRefId)))) ->
         if refId == otherRefId
         then []
-        else [err(l, s"Unification value and variable struct types must match (got struct ${n}, datatype ${otherName})")]
+        else [err(l, s"Unification value and variable struct types must match (got struct ${tagName}, datatype ${fromMaybe("<anon>", otherName)})")]
       | structSEU(), errorType() -> []
-      | structSEU(), t -> [err(l, s"Unification is not defined for struct ${n} and non-struct ${showType(t)}")]
+      | structSEU(), t -> [err(l, s"Unification is not defined for struct ${tagName} and non-struct ${showType(t)}")]
       | unionSEU(), _ -> [err(l, s"Unification is not defined for unions")]
       | enumSEU(), _ -> error("Unexpected enum refIdExtType")
       end ++
       case lookupRefId(refId, globalEnv(env)) of
       | structRefIdItem(struct) :: _ -> struct.unifyErrors(l, env)
-      | _ -> [err(l, s"struct ${n} does not have a (global) definition.")]
+      | _ -> [err(l, s"struct ${tagName} does not have a (global) definition.")]
       end;
   top.unifyProd =
     case top.otherType of
     | extType(_, refIdExtType(_, _, _)) -> structUnifyExpr(_, _, _, location=_)
     | extType(_, varType(_)) -> valVarUnifyExpr(_, _, _, location=_)
-    | errorType() -> \ Expr Expr Expr l::Location -> errorExpr([], location=l)
+    | _ -> \ Expr Expr Expr l::Location -> errorExpr([], location=l)
     end;
 }
 
@@ -263,7 +268,7 @@ top::ExtType ::= adtName::String adtDeclName::String refId::String
     case top.otherType of
     | extType(_, adtExtType(_, _, _)) -> adtUnifyExpr(_, _, _, location=_)
     | extType(_, varType(_)) -> valVarUnifyExpr(_, _, _, location=_)
-    | errorType() -> \ Expr Expr Expr l::Location -> errorExpr([], location=l)
+    | _ -> \ Expr Expr Expr l::Location -> errorExpr([], location=l)
     end;
 }
 

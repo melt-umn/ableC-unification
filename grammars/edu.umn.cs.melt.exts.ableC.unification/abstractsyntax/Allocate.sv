@@ -1,7 +1,7 @@
 grammar edu:umn:cs:melt:exts:ableC:unification:abstractsyntax;
 
 abstract production varReferenceDecl
-top::Decl ::= id::Name  allocator::Name
+top::Decl ::= id::Name  allocator::Name pfx::Maybe<Name>
 {
   top.pp = pp"var_reference datatype ${id.pp} with ${allocator.pp};";
   
@@ -32,16 +32,23 @@ top::Decl ::= id::Name  allocator::Name
     | adtRefIdTagItem(refId) ->
       case lookupRefId(refId, top.env) of
       | adtRefIdItem(d) :: _ -> d
+      | _ -> error("adtLookup demanded when not an adtRefIdItem")
       end
+    | _ -> error("adtLookup demanded when not an adtRefIdTagItem")
     end;
   -- Re-decorate the found ADT decl, also supplying the allocator name
   local d::ADTDecl = new(adtLookup);
   d.env = top.env; -- TODO: Not exactly correct, but the decl needs to see the tag to avoid re-generating the refId
-  d.returnType = adtLookup.returnType;
+  d.controlStmtContext = adtLookup.controlStmtContext;
   d.isTopLevel = adtLookup.isTopLevel;
   d.givenRefId = adtLookup.givenRefId;
   d.adtGivenName = adtLookup.adtGivenName;
   d.allocatorName = allocator;
+  d.allocatePfx =
+    case pfx of
+    | just(pfx) -> pfx.name
+    | nothing() -> allocator.name ++ "_"
+    end;
   
   forwards to
     if !null(adtLookupErrors)
@@ -52,7 +59,7 @@ top::Decl ::= id::Name  allocator::Name
 }
 
 abstract production templateVarReferenceDecl
-top::Decl ::= id::Name  allocator::Name
+top::Decl ::= id::Name  allocator::Name pfx::Maybe<Name>
 {
   top.pp = pp"template var_reference datatype ${id.pp} with ${allocator.pp};";
   
@@ -77,17 +84,24 @@ top::Decl ::= id::Name  allocator::Name
   local adtLookup::Decorated ADTDecl =
     case lookupTemplate(id.name, top.env) of
     | adtTemplateItem(params, adt) :: _ -> adt
+    | _ -> error("adtLookup demanded when not an adtTemplateItem")
     end;
   -- Re-decorate the found ADT decl, also supplying the allocator name
   local d::ADTDecl = new(adtLookup);
   d.env = adtLookup.env;
-  d.returnType = adtLookup.returnType;
+  d.controlStmtContext = adtLookup.controlStmtContext;
   d.adtGivenName = adtLookup.adtGivenName;
   d.templateParameters =
     case lookupTemplate(id.name, top.env) of
     | adtTemplateItem(params, adt) :: _ -> params
+    | _ -> error("templateParameters demanded when not an adtTemplateItem")
     end;
   d.allocatorName = allocator;
+  d.allocatePfx =
+    case pfx of
+    | just(pfx) -> pfx.name
+    | nothing() -> allocator.name ++ "_"
+    end;
   
   forwards to
     if !null(adtLookupErrors)
@@ -173,7 +187,8 @@ top::Expr ::= adtName::Name allocatorName::Name constructorName::Name paramTypes
   
   args.expectedTypes = paramTypes;
   args.argumentPosition = 1;
-  args.callExpr = decorate declRefExpr(n, location=n.location) with {env = top.env; returnType = top.returnType;};
+  args.callExpr = decorate declRefExpr(n, location=n.location) with {env = top.env; 
+    controlStmtContext = top.controlStmtContext;};
   args.callVariadic = false;
   
   local adtTypeExpr::BaseTypeExpr = adtTagReferenceTypeExpr(nilQualifier(), adtName);
@@ -228,7 +243,8 @@ top::Expr ::= adtName::Name allocatorName::Name constructorName::Name ts::Templa
   
   args.expectedTypes = paramTypes;
   args.argumentPosition = 1;
-  args.callExpr = decorate declRefExpr(n, location=n.location) with {env = top.env; returnType = top.returnType;};
+  args.callExpr = decorate declRefExpr(n, location=n.location) with {env = top.env; 
+    controlStmtContext = top.controlStmtContext;};
   args.callVariadic = false;
   
   local resultTypeExpr::BaseTypeExpr =
