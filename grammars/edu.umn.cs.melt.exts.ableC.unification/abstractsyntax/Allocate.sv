@@ -194,7 +194,7 @@ top::Expr ::= adtName::Name allocatorName::Name constructorName::Name paramTypes
   local adtTypeExpr::BaseTypeExpr = adtTagReferenceTypeExpr(nilQualifier(), adtName);
   local resultTypeExpr::BaseTypeExpr =
     typeModifierTypeExpr(adtTypeExpr, varTypeExpr(nilQualifier(), baseTypeExpr(), builtin));
-  local resultName::String = "result_" ++ toString(genInt());
+  local resultName::String = "result_" ++ toString(genIntT());
   local fwrd::Expr =
     ableC_Expr {
       proto_typedef _var_d;
@@ -251,7 +251,7 @@ top::Expr ::= adtName::Name allocatorName::Name constructorName::Name ts::Templa
     typeModifierTypeExpr(
       templateTypedefTypeExpr(nilQualifier(), adtName, ts),
       varTypeExpr(nilQualifier(), baseTypeExpr(), builtin));
-  local resultName::String = "result_" ++ toString(genInt());
+  local resultName::String = "result_" ++ toString(genIntT());
   local fwrd::Expr =
     ableC_Expr {
       proto_typedef _var_d;
