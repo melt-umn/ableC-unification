@@ -51,7 +51,7 @@ top::Pattern ::= p::Pattern
   top.defs <- isBound.defs;
   
   -- Store the result in a temporary variable since p.transformIn may be used more than once.
-  local tempName::String = "_match_var_" ++ toString(genIntT());
+  local tempName::String = "_match_var_" ++ toString(genInt());
   local valueDecl::Stmt =
     ableC_Stmt {
       template<typename a> a value();

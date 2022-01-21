@@ -37,8 +37,8 @@ top::Expr ::= e1::Expr e2::Expr trail::MaybeExpr
       }
     end;
   
-  local tmpName1::Name = name("_tmp" ++ toString(genIntT()), location=builtin);
-  local tmpName2::Name = name("_tmp" ++ toString(genIntT()), location=builtin);
+  local tmpName1::Name = name("_tmp" ++ toString(genInt()), location=builtin);
+  local tmpName2::Name = name("_tmp" ++ toString(genInt()), location=builtin);
   
   local dcls::Stmt =
     ableC_Stmt {
