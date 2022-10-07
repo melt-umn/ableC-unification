@@ -1,6 +1,6 @@
 grammar edu:umn:cs:melt:exts:ableC:unification:concretesyntax:unification;
 
-marking terminal VarType_t '?';
+marking terminal VarType_t '?' precedence = 6, association = left, lexer classes {Operator};  -- same precedence/association as Star_t
 
 concrete productions top::Pointer_c
 | '?'
