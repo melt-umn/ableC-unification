@@ -32,7 +32,7 @@ a value(a ?var) {
   match ((_var_d<a> *)var) {
     &_Free() -> {
       fprintf(stderr, "Error: Cannot access value of free variable\n");
-      exit(1);
+      abort();
     }
     &_Bound(val) -> {
       return val;
@@ -44,14 +44,49 @@ a value(a ?var) {
 }
 
 template<typename a>
+a value_loc(a ?var, const char *loc) {
+  match ((_var_d<a> *)var) {
+    &_Free() -> {
+      fprintf(stderr, "Error: Value demanded of free variable at %s\n", loc);
+      abort();
+    }
+    &_Bound(val) -> {
+      return val;
+    }
+    &_BoundVar(other_var) -> {
+      return value(other_var);
+    }
+  }
+}
+
+template<typename a>
+a ?base_var(a ?var) {
+  match ((_var_d<a> *)var) {
+    &_Free() -> {
+      return var;
+    }
+    &_Bound(val) -> {
+      fprintf(stderr, "Error: Cannot access base of bound variable\n");
+      abort();
+    }
+    &_BoundVar(other_var) -> {
+      return base_var(other_var);
+    }
+  }
+}
+
+template<typename a>
 string show_var(a ?var) {
-  match (var) {
-    freevar -> {
+  match ((void *)var, var) {
+    NULL, _ -> {
+      return str("<var (nil)>");
+    }
+    _, freevar -> {
       char buffer[24];
-      sprintf(buffer, "<var %x>", (union {a ?v; unsigned n;}){.v = var}.n);
+      sprintf(buffer, "<var %x>", (union {a ?v; unsigned n;}){.v = base_var(var)}.n);
       return str(buffer);
     }
-    ?&val -> {
+    _, ?&val -> {
       return show(val);
     }
   }
@@ -59,13 +94,16 @@ string show_var(a ?var) {
 
 template<typename a>
 string str_var(a ?var) {
-  match (var) {
-    freevar -> {
+  match ((void *)var, var) {
+    NULL, _ -> {
+      return str("<var (nil)>");
+    }
+    _, freevar -> {
       char buffer[24];
-      sprintf(buffer, "<var %x>", (union {a ?v; unsigned n;}){.v = var}.n);
+      sprintf(buffer, "<var %x>", (union {a ?v; unsigned n;}){.v = base_var(var)}.n);
       return str(buffer);
     }
-    ?&val -> {
+    _, ?&val -> {
       return str(val);
     }
   }

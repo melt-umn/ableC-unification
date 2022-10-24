@@ -70,5 +70,9 @@ int main() {
   if (value(e) != 42)
     return 18;
 
+  int ?f = (int ?)NULL;
+  if (show(f) != "<var (nil)>")
+    return 19;
+
   delete_var(free, c);
 }
