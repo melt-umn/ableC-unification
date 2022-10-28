@@ -48,6 +48,9 @@ top::Expr ::= e1::Expr e2::Expr trail::MaybeExpr
   dcls.env = top.env;
   dcls.controlStmtContext = top.controlStmtContext;
 
+  trail.env = top.env;
+  trail.controlStmtContext = top.controlStmtContext;
+
   -- TODO: replace with pattern-decoration syntax
   local decE1::Decorated Expr =
     case dcls of
@@ -127,6 +130,7 @@ abstract production varValUnifyExpr
 top::Expr ::= e1::Expr e2::Expr trail::Expr
 {
   top.pp = pp"unifyVarVal(${e1.pp}, ${e2.pp}, ${trail.pp})";
+  propagate env, controlStmtContext;
   
   local type::Type = varSubType(e1.typerep).mergeQualifiers(e2.typerep);
   forwards to
@@ -139,6 +143,7 @@ abstract production valVarUnifyExpr
 top::Expr ::= e1::Expr e2::Expr trail::Expr
 {
   top.pp = pp"unifyValVar(${e1.pp}, ${e2.pp}, ${trail.pp})";
+  propagate env, controlStmtContext;
   
   local type::Type = e1.typerep.mergeQualifiers(varSubType(e2.typerep));
   forwards to
@@ -151,6 +156,7 @@ abstract production varVarUnifyExpr
 top::Expr ::= e1::Expr e2::Expr trail::Expr
 {
   top.pp = pp"unifyVarVar(${e1.pp}, ${e2.pp}, ${trail.pp})";
+  propagate env, controlStmtContext;
   
   local type::Type = varSubType(e1.typerep).mergeQualifiers(varSubType(e2.typerep));
   forwards to
@@ -166,6 +172,7 @@ abstract production structUnifyExpr
 top::Expr ::= e1::Expr e2::Expr trail::Expr
 {
   top.pp = pp"unifyStruct(${e1.pp}, ${e2.pp}, ${trail.pp})";
+  propagate env, controlStmtContext;
   
   local structLookup::[RefIdItem] =
     case e1.typerep.maybeRefId of
@@ -329,6 +336,7 @@ abstract production adtUnifyExpr
 top::Expr ::= e1::Expr e2::Expr trail::Expr
 {
   top.pp = pp"unifyDatatype(${e1.pp}, ${e2.pp}, ${trail.pp})";
+  propagate env, controlStmtContext;
   
   local adtLookup::[RefIdItem] =
     case e1.typerep.maybeRefId of

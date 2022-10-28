@@ -16,6 +16,7 @@ abstract production freeVarExpr
 top::Expr ::= ty::TypeName allocator::Expr
 {
   top.pp = pp"freevar<${ty.pp}>(${allocator.pp})";
+  propagate env, controlStmtContext;
 
   local localErrors::[Message] =
     ty.errors ++ allocator.errors ++
@@ -46,6 +47,7 @@ abstract production boundVarExpr
 top::Expr ::= allocator::Expr e::Expr
 {
   top.pp = pp"boundvar(${allocator.pp}, ${e.pp})";
+  propagate env, controlStmtContext;
   
   local localErrors::[Message] =
     allocator.errors ++ e.errors ++
