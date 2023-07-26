@@ -57,7 +57,7 @@ top::Def ::=
 abstract production customUnifyDef
 top::Def ::= t::Type showFunctionName::Name
 {
-  top.customUnifyContribs = [pair(t.withoutTypeQualifiers.mangledName, showFunctionName)];
+  top.customUnifyContribs = [(t.withoutTypeQualifiers.mangledName, showFunctionName)];
 }
 
 function getCustomUnify

@@ -29,7 +29,7 @@ top::Pattern ::=
 abstract production boundVarPattern
 top::Pattern ::= p::Pattern
 {
-  propagate controlStmtContext, decls, patternDefs, defs, errors;
+  propagate controlStmtContext, patternDefs, defs, errors;
   top.pp = pp"?&${p.pp}";
   top.errors <-
     case top.expectedType.withoutAttributes of
@@ -62,6 +62,8 @@ top::Pattern ::= p::Pattern
   top.defs <- valueDecl.defs;
   
   p.env = addEnv(valueDecl.defs, valueDecl.env);
+
+  top.patternDecls = @p.patternDecls;
   
   p.transformIn = declRefExpr(name(tempName, location=builtin), location=builtin);
   top.transform =
