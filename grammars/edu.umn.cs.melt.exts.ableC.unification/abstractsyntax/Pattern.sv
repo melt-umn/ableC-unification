@@ -40,19 +40,6 @@ top::Pattern ::= p::Pattern
   
   -- Store the result in a temporary variable since p.transformIn may be used more than once.
   local tempName::String = "_match_var_" ++ toString(genInt());
-  local valueDecl::Stmt =
-    ableC_Stmt {
-      template<typename a> a value();
-      $directTypeExpr{subType} $name{tempName} = value($Expr{top.transformIn});
-    };
-  valueDecl.env = addEnv(isBound.defs, openScopeEnv(isBound.env));
-  valueDecl.controlStmtContext = initialControlStmtContext;
-  top.defs <- valueDecl.defs;
-  
-  p.env = addEnv(valueDecl.defs, valueDecl.env);
-
-  top.patternDecls = @p.patternDecls;
-  
   p.transformIn = declRefExpr(name(tempName, location=builtin), location=builtin);
   top.transform =
     ableC_Expr {
