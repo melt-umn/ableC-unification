@@ -12,8 +12,8 @@ marking terminal VarRefOp_t '?&' precedence = 1, lexer classes {Operator};
 
 concrete productions top::BasicPattern_c
 | PatternFreeVar_t
-  { top.ast = freeVarPattern(location=top.location); }
+  { top.ast = freeVarPattern(); }
 
 concrete productions top::Pattern_c
 | VarRefOp_t p1::Pattern_c
-  { top.ast = boundVarPattern(p1.ast, location=top.location); }
+  { top.ast = boundVarPattern(p1.ast); }

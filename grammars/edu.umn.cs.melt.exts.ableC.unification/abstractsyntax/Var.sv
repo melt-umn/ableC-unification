@@ -21,10 +21,10 @@ top::Expr ::= ty::TypeName allocator::Expr
   local localErrors::[Message] =
     ty.errors ++ allocator.errors ++
     (if !ty.typerep.isCompleteType(addEnv(ty.defs, ty.env))
-     then [err(top.location, s"var type parameter has incomplete type ${showType(ty.typerep)}")]
+     then [errFromOrigin(top, s"var type parameter has incomplete type ${showType(ty.typerep)}")]
      else []) ++
     (if !typeAssignableTo(expectedAllocatorType, allocator.typerep)
-     then [err(allocator.location, s"Allocator must have type void *(unsigned long) (got ${showType(allocator.typerep)})")]
+     then [errFromOrigin(allocator, s"Allocator must have type void *(unsigned long) (got ${showType(allocator.typerep)})")]
      else []) ++
     checkUnificationHeaderTemplateDef("_var_d", top.location, top.env);
   
@@ -52,7 +52,7 @@ top::Expr ::= allocator::Expr e::Expr
   local localErrors::[Message] =
     allocator.errors ++ e.errors ++
     (if !typeAssignableTo(expectedAllocatorType, allocator.typerep)
-     then [err(allocator.location, s"Allocator must have type void *(unsigned long) (got ${showType(allocator.typerep)})")]
+     then [errFromOrigin(allocator, s"Allocator must have type void *(unsigned long) (got ${showType(allocator.typerep)})")]
      else []) ++
     checkUnificationHeaderTemplateDef("_var_d", top.location, top.env);
   

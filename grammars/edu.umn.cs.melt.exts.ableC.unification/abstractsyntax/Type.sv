@@ -30,7 +30,7 @@ top::TypeModifierExpr ::= q::Qualifiers sub::TypeModifierExpr loc::Location
     foldDecl(
       sub.decls ++
       [templateTypeExprInstDecl(
-        q, name("_var_d", location=builtin),
+        q, name("_var_d"),
         foldTemplateArg([typeTemplateArg(sub.typerep)]))]);
   
   -- Non-interfering overrides for better performance
@@ -70,9 +70,9 @@ top::Type ::=
       end;
   top.unifyProd =
     case top.otherType of
-    | extType(_, varType(_)) -> valVarUnifyExpr(_, _, _, location=_)
-    | errorType() -> \ Expr Expr Expr l::Location -> errorExpr([], location=l)
-    | _ -> defaultUnifyExpr(_, _, _, location=_)
+    | extType(_, varType(_)) -> valVarUnifyExpr
+    | errorType() -> \ Expr Expr Expr l::Location -> errorExpr([])
+    | _ -> defaultUnifyExpr
     end;
 }
 
@@ -80,7 +80,7 @@ aspect production errorType
 top::Type ::= 
 {
   top.unifyErrors = \ Location Decorated Env -> [];
-  top.unifyProd = \ Expr Expr Expr l::Location -> errorExpr([], location=l);
+  top.unifyProd = \ Expr Expr Expr l::Location -> errorExpr([]);
 }
 
 aspect production extType
@@ -96,7 +96,7 @@ top::ExtType ::=
   top.unifyErrors =
     \ l::Location Decorated Env ->
       [err(l, s"Unification is not defined for types ${showType(extType(top.givenQualifiers, top))}, ${showType(top.otherType)}")];
-  top.unifyProd = \ Expr Expr Expr l::Location -> errorExpr([], location=l);
+  top.unifyProd = \ Expr Expr Expr l::Location -> errorExpr([]);
 }
 
 abstract production varType
@@ -158,9 +158,9 @@ top::ExtType ::= sub::Type
       end;
   top.unifyProd =
     case top.otherType of
-    | extType(_, varType(_)) -> varVarUnifyExpr(_, _, _, location=_)
-    | errorType() -> \ Expr Expr Expr l::Location -> errorExpr([], location=l)
-    | _ -> varValUnifyExpr(_, _, _, location=_)
+    | extType(_, varType(_)) -> varVarUnifyExpr
+    | errorType() -> \ Expr Expr Expr l::Location -> errorExpr([])
+    | _ -> varValUnifyExpr
     end;
 }
 
@@ -181,9 +181,9 @@ top::ExtType ::=
       end;
   top.unifyProd =
     case top.otherType of
-    | extType(_, varType(_)) -> valVarUnifyExpr(_, _, _, location=_)
-    | errorType() -> \ Expr Expr Expr l::Location -> errorExpr([], location=l)
-    | _ -> defaultUnifyExpr(_, _, _, location=_)
+    | extType(_, varType(_)) -> valVarUnifyExpr
+    | errorType() -> \ Expr Expr Expr l::Location -> errorExpr([])
+    | _ -> defaultUnifyExpr
     end;
 }
 
@@ -205,9 +205,9 @@ top::ExtType ::= ref::Decorated EnumDecl
       end;
   top.unifyProd =
     case top.otherType of
-    | extType(_, varType(_)) -> valVarUnifyExpr(_, _, _, location=_)
-    | errorType() -> \ Expr Expr Expr l::Location -> errorExpr([], location=l)
-    | _ -> defaultUnifyExpr(_, _, _, location=_)
+    | extType(_, varType(_)) -> valVarUnifyExpr
+    | errorType() -> \ Expr Expr Expr l::Location -> errorExpr([])
+    | _ -> defaultUnifyExpr
     end;
 }
 
@@ -237,9 +237,9 @@ top::ExtType ::= kwd::StructOrEnumOrUnion  _  refId::String
       end;
   top.unifyProd =
     case top.otherType of
-    | extType(_, refIdExtType(_, _, _)) -> structUnifyExpr(_, _, _, location=_)
-    | extType(_, varType(_)) -> valVarUnifyExpr(_, _, _, location=_)
-    | _ -> \ Expr Expr Expr l::Location -> errorExpr([], location=l)
+    | extType(_, refIdExtType(_, _, _)) -> structUnifyExpr
+    | extType(_, varType(_)) -> valVarUnifyExpr
+    | _ -> \ Expr Expr Expr l::Location -> errorExpr([])
     end;
 }
 
@@ -267,9 +267,9 @@ top::ExtType ::= adtName::String adtDeclName::String refId::String
       end;
   top.unifyProd =
     case top.otherType of
-    | extType(_, adtExtType(_, _, _)) -> adtUnifyExpr(_, _, _, location=_)
-    | extType(_, varType(_)) -> valVarUnifyExpr(_, _, _, location=_)
-    | _ -> \ Expr Expr Expr l::Location -> errorExpr([], location=l)
+    | extType(_, adtExtType(_, _, _)) -> adtUnifyExpr
+    | extType(_, varType(_)) -> valVarUnifyExpr
+    | _ -> \ Expr Expr Expr l::Location -> errorExpr([])
     end;
 }
 

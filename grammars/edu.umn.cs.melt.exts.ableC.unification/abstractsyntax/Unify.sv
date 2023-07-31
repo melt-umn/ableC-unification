@@ -8,7 +8,7 @@ aspect function getInitialEnvDefs
        "unify",
        builtinFunctionValueItem(
          functionType(builtinType(nilQualifier(), boolType()), noProtoFunctionType(), nilQualifier()),
-         unifyCallExpr(_, _, location=_)))];
+         unifyCallExpr))];
 }
 
 abstract production unifyCallExpr
@@ -16,9 +16,9 @@ top::Expr ::= f::Name a::Exprs
 {
   forwards to
     case a of
-    | consExpr(e1, consExpr(e2, nilExpr())) -> unifyExpr(e1, e2, nothingExpr(), location=top.location)
-    | consExpr(e1, consExpr(e2, consExpr(t, nilExpr()))) -> unifyExpr(e1, e2, justExpr(t), location=top.location)
-    | _ -> errorExpr([err(top.location, s"${f.name} expected 2 or 3 arguments, got ${toString(a.count)}")], location=top.location)
+    | consExpr(e1, consExpr(e2, nilExpr())) -> unifyExpr(e1, e2, nothingExpr())
+    | consExpr(e1, consExpr(e2, consExpr(t, nilExpr()))) -> unifyExpr(e1, e2, justExpr(t))
+    | _ -> errorExpr([errFromOrigin(top, s"${f.name} expected 2 or 3 arguments, got ${toString(a.count)}")])
     end;
 }
 
@@ -37,8 +37,8 @@ top::Expr ::= e1::Expr e2::Expr trail::MaybeExpr
       }
     end;
   
-  local tmpName1::Name = name("_tmp" ++ toString(genInt()), location=builtin);
-  local tmpName2::Name = name("_tmp" ++ toString(genInt()), location=builtin);
+  local tmpName1::Name = name("_tmp" ++ toString(genInt()));
+  local tmpName2::Name = name("_tmp" ++ toString(genInt()));
   
   local dcls::Stmt =
     ableC_Stmt {
@@ -76,8 +76,8 @@ top::Expr ::= e1::Expr e2::Expr trail::MaybeExpr
     case getCustomUnify(type1, type2, top.env) of
     | just(unify) ->
         ableC_Expr {
-          $Name{unify}($Expr{decExpr(decE1, location=decE1.location)},
-                       $Expr{decExpr(decE2, location=decE2.location)},
+          $Name{unify}($Expr{decExpr(decE11.location)},
+                       $Expr{decExpr(decE22.location)},
                        $Expr{trailExpr})
         }
     | nothing() ->
@@ -86,21 +86,18 @@ top::Expr ::= e1::Expr e2::Expr trail::MaybeExpr
         | true, false, seqStmt(_, d) ->
           stmtExpr(
             decStmt(d),
-            type1.unifyProd(e1, declRefExpr(tmpName2, location=builtin), trailExpr, top.location),
-            location=builtin)
+            type1.unifyProd(e1, declRefExpr(tmpName2), trailExpr, top.location))
         | false, true, seqStmt(d, _) ->
           stmtExpr(
             decStmt(d),
-            type1.unifyProd(declRefExpr(tmpName1, location=builtin), e2, trailExpr, top.location),
-            location=builtin)
+            type1.unifyProd(declRefExpr(tmpName1), e2, trailExpr, top.location))
         | false, false, _ ->
           stmtExpr(
             decStmt(dcls),
             type1.unifyProd(
-              declRefExpr(tmpName1, location=builtin),
-              declRefExpr(tmpName2, location=builtin),
-              trailExpr, top.location),
-            location=builtin)
+              declRefExpr(tmpName1),
+              declRefExpr(tmpName2),
+              trailExpr, top.location))
         | _, _, _ -> error("Invalid structure for dcls")
         end
     end;
@@ -123,7 +120,7 @@ top::Expr ::= e1::Expr e2::Expr trail::Expr
 {
   top.pp = pp"unifyDefault(${e1.pp}, ${e2.pp}, ${trail.pp})";
   
-  forwards to equalsExpr(e1, e2, location=builtin);
+  forwards to equalsExpr(e1, e2);
 }
 
 abstract production varValUnifyExpr
@@ -191,8 +188,7 @@ top::Expr ::= e1::Expr e2::Expr trail::Expr
       foldDecl([maybeValueDecl(struct.unifyFnName, decls(struct.unifyTransform))]),
       ableC_Expr {
         $name{struct.unifyFnName}($Expr{e1}, $Expr{e2}, $Expr{trail})
-      },
-      location=builtin);
+      });
 }
 
 attribute unifyErrors occurs on StructDecl, StructItemList, StructItem, StructDeclarators, StructDeclarator;
@@ -239,7 +235,7 @@ top::StructItemList ::= h::StructItem  t::StructItemList
   top.unifyErrors =
     \ l::Location env::Decorated Env -> h.unifyErrors(l, env) ++ t.unifyErrors(l, env);
   top.unifyTransform =
-    andExpr(h.unifyTransform, t.unifyTransform, location=builtin);
+    andExpr(h.unifyTransform, t.unifyTransform);
 }
 aspect production nilStructItem
 top::StructItemList ::=
@@ -266,7 +262,7 @@ top::StructItem ::= d::StructDecl
   -- TODO?
   top.unifyErrors =
     \ l::Location env::Decorated Env ->
-      [err(d.location, "Unification is not yet supported for anonymous structs")];
+      [errFromOrigin(d, "Unification is not yet supported for anonymous structs")];
   top.unifyTransform = error("Undefined, should have raised an error");
 }
 aspect production anonUnionStructItem
@@ -274,7 +270,7 @@ top::StructItem ::= d::UnionDecl
 {
   top.unifyErrors =
     \ l::Location env::Decorated Env ->
-      [err(d.location, "Unification is not defined for unions")];
+      [errFromOrigin(d, "Unification is not defined for unions")];
   top.unifyTransform = error("Undefined, should have raised an error");
 }
 aspect production warnStructItem
@@ -290,7 +286,7 @@ top::StructDeclarators ::= h::StructDeclarator  t::StructDeclarators
   top.unifyErrors =
     \ l::Location env::Decorated Env -> h.unifyErrors(l, env) ++ t.unifyErrors(l, env);
   top.unifyTransform =
-    andExpr(h.unifyTransform, t.unifyTransform, location=builtin);
+    andExpr(h.unifyTransform, t.unifyTransform);
 }
 aspect production nilStructDeclarator
 top::StructDeclarators ::=
@@ -307,8 +303,7 @@ top::StructDeclarator ::= name::Name  ty::TypeModifierExpr  attrs::Attributes
     unifyExpr(
       ableC_Expr { s1.$Name{name} },
       ableC_Expr { s2.$Name{name} },
-      justExpr(ableC_Expr { trail }),
-      location=builtin);
+      justExpr(ableC_Expr { trail }));
 }
 aspect production structBitfield
 top::StructDeclarator ::= name::MaybeName  ty::TypeModifierExpr  e::Expr  attrs::Attributes
@@ -320,8 +315,7 @@ top::StructDeclarator ::= name::MaybeName  ty::TypeModifierExpr  e::Expr  attrs:
       unifyExpr(
         ableC_Expr { s1.$Name{n} },
         ableC_Expr { s2.$Name{n} },
-        justExpr(ableC_Expr { trail }),
-        location=builtin)
+        justExpr(ableC_Expr { trail }))
     | nothingName() -> mkIntConst(1, builtin) -- Ignore anonymous padding bits
     end;
 }
@@ -355,8 +349,7 @@ top::Expr ::= e1::Expr e2::Expr trail::Expr
       foldDecl([maybeValueDecl(adt.unifyFnName, decls(adt.unifyTransform))]),
       ableC_Expr {
         $name{adt.unifyFnName}($Expr{e1}, $Expr{e2}, $Expr{trail})
-      },
-      location=builtin);
+      });
 }
 
 attribute unifyErrors occurs on ADTDecl, ConstructorList, Constructor, Parameters, ParameterDecl;
@@ -403,14 +396,14 @@ top::ConstructorList ::= c::Constructor cl::ConstructorList
   top.unifyErrors =
     \ l::Location env::Decorated Env -> c.unifyErrors(l, env) ++ cl.unifyErrors(l, env);
   top.unifyTransform =
-    consExprClause(c.unifyTransform, cl.unifyTransform, location=builtin);
+    consExprClause(c.unifyTransform, cl.unifyTransform);
 }
 
 aspect production nilConstructor
 top::ConstructorList ::=
 {
   top.unifyErrors = \ Location Decorated Env -> [];
-  top.unifyTransform = failureExprClause(location=builtin);
+  top.unifyTransform = failureExprClause();
 }
 
 attribute unifyTransform<ExprClause> occurs on Constructor;
@@ -422,12 +415,11 @@ top::Constructor ::= n::Name ps::Parameters
   top.unifyTransform =
     exprClause(
       consPattern(
-        constructorPattern(n, ps.unifyPatterns1, location=builtin),
+        constructorPattern(n, ps.unifyPatterns1),
         consPattern(
-          constructorPattern(n, ps.unifyPatterns2, location=builtin),
+          constructorPattern(n, ps.unifyPatterns2),
           nilPattern())),
-      ps.unifyTransform,
-      location=builtin);
+      ps.unifyTransform);
 }
 
 synthesized attribute unifyPatterns1::PatternList occurs on Parameters;
@@ -442,7 +434,7 @@ top::Parameters ::= h::ParameterDecl t::Parameters
   top.unifyPatterns1 = consPattern(h.unifyPattern1, t.unifyPatterns1);
   top.unifyPatterns2 = consPattern(h.unifyPattern2, t.unifyPatterns2);
   top.unifyTransform =
-    andExpr(h.unifyTransform, t.unifyTransform, location=builtin);
+    andExpr(h.unifyTransform, t.unifyTransform);
 }
 
 aspect production nilParameters
@@ -463,16 +455,15 @@ top::ParameterDecl ::= storage::StorageClasses  bty::BaseTypeExpr  mty::TypeModi
 {
   top.unifyErrors = \ Location env::Decorated Env -> unifyErrors(top.sourceLocation, env, top.typerep, top.typerep);
   
-  local varName1::Name = name(fieldName.name ++ "1", location=builtin);
-  local varName2::Name = name(fieldName.name ++ "2", location=builtin);
-  top.unifyPattern1 = patternName(varName1, location=builtin);
-  top.unifyPattern2 = patternName(varName2, location=builtin);
+  local varName1::Name = name(fieldName.name ++ "1");
+  local varName2::Name = name(fieldName.name ++ "2");
+  top.unifyPattern1 = patternName(varName1);
+  top.unifyPattern2 = patternName(varName2);
   top.unifyTransform =
     unifyExpr(
-      declRefExpr(varName1, location=builtin),
-      declRefExpr(varName2, location=builtin),
-      justExpr(ableC_Expr { trail }),
-      location=builtin);
+      declRefExpr(varName1),
+      declRefExpr(varName2),
+      justExpr(ableC_Expr { trail }));
 }
 
 -- Check the given env for the given value name

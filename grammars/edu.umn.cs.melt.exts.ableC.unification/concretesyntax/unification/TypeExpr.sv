@@ -17,7 +17,7 @@ concrete productions top::Pointer_c
 -- See ableC/grammars/edu.umn.cs.melt.ableC/concretesyntax/gcc_exts/Declarations.sv
 -- We can't directly resolve the ambigutiy with attributes in the qualifier list using precedence since '?' is a marking terminal.
 -- Instead, define a new nonterminal for lists of type qualifiers that can't start with attributes:
-closed nonterminal InitiallyUnattributedTypeQualifierList_c with location, typeQualifiers, mutateTypeSpecifiers, specialSpecifiers, attributes;
+closed tracked nonterminal InitiallyUnattributedTypeQualifierList_c with typeQualifiers, mutateTypeSpecifiers, specialSpecifiers, attributes;
 concrete productions top::InitiallyUnattributedTypeQualifierList_c
 | h::TypeQualifier_c
   operator=CPP_Attr_LowerPrec_t
