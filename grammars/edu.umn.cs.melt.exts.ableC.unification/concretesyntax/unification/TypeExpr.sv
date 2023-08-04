@@ -4,14 +4,14 @@ marking terminal VarType_t '?' lexer classes {Operator};
 
 concrete productions top::Pointer_c
 | '?'
-    { top.ast = varTypeExpr(nilQualifier(), top.givenType, top.location); }
+    { top.ast = varTypeExpr(nilQualifier(), top.givenType); }
 | '?'  q::InitiallyUnattributedTypeQualifierList_c
-    { top.ast = varTypeExpr(q.typeQualifiers, top.givenType, top.location); }
+    { top.ast = varTypeExpr(q.typeQualifiers, top.givenType); }
 | '?'  t::Pointer_c
-    { t.givenType = varTypeExpr(nilQualifier(), top.givenType, top.location);
+    { t.givenType = varTypeExpr(nilQualifier(), top.givenType);
       top.ast = t.ast; }
 | '?'  q::InitiallyUnattributedTypeQualifierList_c  t::Pointer_c
-    { t.givenType = varTypeExpr(q.typeQualifiers, top.givenType, top.location);
+    { t.givenType = varTypeExpr(q.typeQualifiers, top.givenType);
       top.ast = t.ast; }
 
 -- See ableC/grammars/edu.umn.cs.melt.ableC/concretesyntax/gcc_exts/Declarations.sv

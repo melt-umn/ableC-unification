@@ -26,7 +26,7 @@ top::Expr ::= ty::TypeName allocator::Expr
     (if !typeAssignableTo(expectedAllocatorType, allocator.typerep)
      then [errFromOrigin(allocator, s"Allocator must have type void *(unsigned long) (got ${showType(allocator.typerep)})")]
      else []) ++
-    checkUnificationHeaderTemplateDef("_var_d", top.location, top.env);
+    checkUnificationHeaderTemplateDef("_var_d", top.env);
   
   local fwrd::Expr =
     ableC_Expr {
@@ -37,7 +37,7 @@ top::Expr ::= ty::TypeName allocator::Expr
         ($TypeName{
            typeName(
              directTypeExpr(ty.typerep),
-             varTypeExpr(nilQualifier(), baseTypeExpr(), builtin))})_result;})
+             varTypeExpr(nilQualifier(), baseTypeExpr()))})_result;})
     };
   
   forwards to mkErrorCheck(localErrors, fwrd);
@@ -54,7 +54,7 @@ top::Expr ::= allocator::Expr e::Expr
     (if !typeAssignableTo(expectedAllocatorType, allocator.typerep)
      then [errFromOrigin(allocator, s"Allocator must have type void *(unsigned long) (got ${showType(allocator.typerep)})")]
      else []) ++
-    checkUnificationHeaderTemplateDef("_var_d", top.location, top.env);
+    checkUnificationHeaderTemplateDef("_var_d", top.env);
   
   local type::Type = e.typerep.defaultFunctionArrayLvalueConversion.canonicalType;
   local fwrd::Expr =
@@ -66,7 +66,7 @@ top::Expr ::= allocator::Expr e::Expr
         ($TypeName{
            typeName(
              directTypeExpr(type),
-             varTypeExpr(nilQualifier(), baseTypeExpr(), builtin))})_result;})
+             varTypeExpr(nilQualifier(), baseTypeExpr()))})_result;})
     };
   
   forwards to mkErrorCheck(localErrors, fwrd);

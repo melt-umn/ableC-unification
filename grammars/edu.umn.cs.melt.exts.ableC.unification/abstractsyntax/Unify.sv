@@ -26,6 +26,7 @@ abstract production unifyExpr
 top::Expr ::= e1::Expr e2::Expr trail::MaybeExpr
 {
   top.pp = pp"unify(${e1.pp}, ${e2.pp}${if trail.isJust then pp", ${trail.pp}" else notext()})";
+  attachNote extensionGenerated("ableC-unification");
   
   local trailExpr::Expr =
     case trail of
@@ -66,38 +67,47 @@ top::Expr ::= e1::Expr e2::Expr trail::MaybeExpr
   local type1::Type = decE1.typerep.defaultFunctionArrayLvalueConversion;
   local type2::Type = decE2.typerep.defaultFunctionArrayLvalueConversion;
   type1.otherType = type2;
+
+  local trailType::Type = trail.maybeTyperep.fromJust;
+  local trailExpectedType::Type =
+    case lookupValue("unification_trail", top.env) of
+    | v :: _ -> v.typerep
+    | _ -> errorType()
+    end;
   
   local localErrors::[Message] =
     decE1.errors ++ decE2.errors ++ trail.errors ++
-    unifyErrors(top.location, addEnv(dcls.defs, dcls.env), type1, type2) ++
-    checkUnificationHeaderDef("unification_trail", top.location, top.env);
+    unifyErrors(addEnv(dcls.defs, dcls.env), type1, type2) ++
+    (if !trail.isJust || typeAssignableTo(trailExpectedType, trailType) then []
+     else [errFromOrigin(trail, s"Trail must have type unification_trail (got ${showType(trailType)})")]) ++
+    checkUnificationHeaderDef("unification_trail", top.env);
   
   local fwrd::Expr =
     case getCustomUnify(type1, type2, top.env) of
     | just(unify) ->
         ableC_Expr {
-          $Name{unify}($Expr{decExpr(decE11.location)},
-                       $Expr{decExpr(decE22.location)},
+          $Name{unify}($Expr{decExpr(decE1)},
+                       $Expr{decExpr(decE2)},
                        $Expr{trailExpr})
         }
     | nothing() ->
         case decE1.isSimple, decE2.isSimple, dcls of
-        | true, true, _ -> type1.unifyProd(e1, e2, trailExpr, top.location)
+        | true, true, _ -> type1.unifyProd(e1, e2, trailExpr)
         | true, false, seqStmt(_, d) ->
           stmtExpr(
             decStmt(d),
-            type1.unifyProd(e1, declRefExpr(tmpName2), trailExpr, top.location))
+            type1.unifyProd(e1, declRefExpr(tmpName2), trailExpr))
         | false, true, seqStmt(d, _) ->
           stmtExpr(
             decStmt(d),
-            type1.unifyProd(declRefExpr(tmpName1), e2, trailExpr, top.location))
+            type1.unifyProd(declRefExpr(tmpName1), e2, trailExpr))
         | false, false, _ ->
           stmtExpr(
             decStmt(dcls),
             type1.unifyProd(
               declRefExpr(tmpName1),
               declRefExpr(tmpName2),
-              trailExpr, top.location))
+              trailExpr))
         | _, _, _ -> error("Invalid structure for dcls")
         end
     end;
@@ -106,12 +116,12 @@ top::Expr ::= e1::Expr e2::Expr trail::MaybeExpr
 }
 
 function unifyErrors
-[Message] ::= l::Location  env::Decorated Env  t1::Type  t2::Type
+[Message] ::= env::Decorated Env  t1::Type  t2::Type
 {
   t1.otherType = t2;
   return case getCustomUnify(t1, t2, env) of
   | just(_) -> []
-  | nothing() -> t1.unifyErrors(l, env)
+  | nothing() -> t1.unifyErrors(env)
   end;
 }
 
@@ -119,6 +129,7 @@ abstract production defaultUnifyExpr
 top::Expr ::= e1::Expr e2::Expr trail::Expr
 {
   top.pp = pp"unifyDefault(${e1.pp}, ${e2.pp}, ${trail.pp})";
+  attachNote extensionGenerated("ableC-unification");
   
   forwards to equalsExpr(e1, e2);
 }
@@ -127,6 +138,7 @@ abstract production varValUnifyExpr
 top::Expr ::= e1::Expr e2::Expr trail::Expr
 {
   top.pp = pp"unifyVarVal(${e1.pp}, ${e2.pp}, ${trail.pp})";
+  attachNote extensionGenerated("ableC-unification");
   propagate env, controlStmtContext;
   
   local type::Type = varSubType(e1.typerep).mergeQualifiers(e2.typerep);
@@ -140,6 +152,7 @@ abstract production valVarUnifyExpr
 top::Expr ::= e1::Expr e2::Expr trail::Expr
 {
   top.pp = pp"unifyValVar(${e1.pp}, ${e2.pp}, ${trail.pp})";
+  attachNote extensionGenerated("ableC-unification");
   propagate env, controlStmtContext;
   
   local type::Type = e1.typerep.mergeQualifiers(varSubType(e2.typerep));
@@ -153,6 +166,7 @@ abstract production varVarUnifyExpr
 top::Expr ::= e1::Expr e2::Expr trail::Expr
 {
   top.pp = pp"unifyVarVar(${e1.pp}, ${e2.pp}, ${trail.pp})";
+  attachNote extensionGenerated("ableC-unification");
   propagate env, controlStmtContext;
   
   local type::Type = varSubType(e1.typerep).mergeQualifiers(varSubType(e2.typerep));
@@ -169,6 +183,7 @@ abstract production structUnifyExpr
 top::Expr ::= e1::Expr e2::Expr trail::Expr
 {
   top.pp = pp"unifyStruct(${e1.pp}, ${e2.pp}, ${trail.pp})";
+  attachNote extensionGenerated("ableC-unification");
   propagate env, controlStmtContext;
   
   local structLookup::[RefIdItem] =
@@ -198,16 +213,17 @@ attribute unifyTransform<Decls> occurs on StructDecl;
 aspect production structDecl
 top::StructDecl ::= attrs::Attributes  name::MaybeName  dcls::StructItemList
 {
+  attachNote extensionGenerated("ableC-unification");
   local n::String = name.maybename.fromJust.name;
   top.unifyErrors =
-    \ l::Location env::Decorated Env ->
+    \ env::Decorated Env ->
       if !name.maybename.isJust
-      then [err(l, "Cannot unify anonymous struct")]
+      then [errFromOrigin(ambientOrigin(), "Cannot unify anonymous struct")]
       else if null(lookupValue(top.unifyFnName, env))
       then
-        case dcls.unifyErrors(top.location, addEnv([valueDef(top.unifyFnName, errorValueItem())], env)) of
+        case attachNote logicalLocationFromOrigin(top) on dcls.unifyErrors(addEnv([valueDef(top.unifyFnName, errorValueItem())], env)) end of
         | [] -> []
-        | m -> [nested(l, s"In unification of struct ${n}", m)]
+        | m -> [nested(getParsedOriginLocationOrFallback(ambientOrigin()), s"In unification of struct ${n}", m)]
         end
       else [];
   top.unifyFnName = "_unify_" ++ n;
@@ -232,16 +248,16 @@ attribute unifyTransform<Expr> occurs on StructItemList, StructItem, StructDecla
 aspect production consStructItem
 top::StructItemList ::= h::StructItem  t::StructItemList
 {
-  top.unifyErrors =
-    \ l::Location env::Decorated Env -> h.unifyErrors(l, env) ++ t.unifyErrors(l, env);
-  top.unifyTransform =
-    andExpr(h.unifyTransform, t.unifyTransform);
+  attachNote extensionGenerated("ableC-unification");
+  top.unifyErrors = \ env::Decorated Env -> h.unifyErrors(env) ++ t.unifyErrors(env);
+  top.unifyTransform = andExpr(h.unifyTransform, t.unifyTransform);
 }
 aspect production nilStructItem
 top::StructItemList ::=
 {
-  top.unifyErrors = \ l::Location env::Decorated Env -> [];
-  top.unifyTransform = mkIntConst(1, builtin);
+  attachNote extensionGenerated("ableC-unification");
+  top.unifyErrors = \ env::Decorated Env -> [];
+  top.unifyTransform = mkIntConst(1);
 }
 
 aspect production structItem
@@ -260,45 +276,44 @@ aspect production anonStructStructItem
 top::StructItem ::= d::StructDecl
 {
   -- TODO?
-  top.unifyErrors =
-    \ l::Location env::Decorated Env ->
-      [errFromOrigin(d, "Unification is not yet supported for anonymous structs")];
+  top.unifyErrors = \ Decorated Env -> [errFromOrigin(d, "Unification is not yet supported for anonymous structs")];
   top.unifyTransform = error("Undefined, should have raised an error");
 }
 aspect production anonUnionStructItem
 top::StructItem ::= d::UnionDecl
 {
-  top.unifyErrors =
-    \ l::Location env::Decorated Env ->
-      [errFromOrigin(d, "Unification is not defined for unions")];
+  top.unifyErrors = \ Decorated Env -> [errFromOrigin(d, "Unification is not defined for unions")];
   top.unifyTransform = error("Undefined, should have raised an error");
 }
 aspect production warnStructItem
 top::StructItem ::= msg::[Message]
 {
-  top.unifyErrors = \ l::Location env::Decorated Env -> [];
-  top.unifyTransform = mkIntConst(1, builtin);
+  attachNote extensionGenerated("ableC-unification");
+  top.unifyErrors = \ Decorated Env -> [];
+  top.unifyTransform = mkIntConst(1);
 }
 
 aspect production consStructDeclarator
 top::StructDeclarators ::= h::StructDeclarator  t::StructDeclarators
 {
-  top.unifyErrors =
-    \ l::Location env::Decorated Env -> h.unifyErrors(l, env) ++ t.unifyErrors(l, env);
-  top.unifyTransform =
-    andExpr(h.unifyTransform, t.unifyTransform);
+  attachNote extensionGenerated("ableC-unification");
+  top.unifyErrors = \ env::Decorated Env -> h.unifyErrors(env) ++ t.unifyErrors(env);
+  top.unifyTransform = andExpr(h.unifyTransform, t.unifyTransform);
 }
 aspect production nilStructDeclarator
 top::StructDeclarators ::=
 {
-  top.unifyErrors = \ l::Location env::Decorated Env -> [];
-  top.unifyTransform = mkIntConst(1, builtin);
+  attachNote extensionGenerated("ableC-unification");
+  top.unifyErrors = \ Decorated Env -> [];
+  top.unifyTransform = mkIntConst(1);
 }
 
 aspect production structField
 top::StructDeclarator ::= name::Name  ty::TypeModifierExpr  attrs::Attributes
 {
-  top.unifyErrors = \ Location env::Decorated Env -> unifyErrors(top.sourceLocation, env, top.typerep, top.typerep);
+  attachNote extensionGenerated("ableC-unification");
+  top.unifyErrors = \ env::Decorated Env ->
+    attachNote logicalLocationFromOrigin(top) on unifyErrors(env, top.typerep, top.typerep) end;
   top.unifyTransform =
     unifyExpr(
       ableC_Expr { s1.$Name{name} },
@@ -308,7 +323,9 @@ top::StructDeclarator ::= name::Name  ty::TypeModifierExpr  attrs::Attributes
 aspect production structBitfield
 top::StructDeclarator ::= name::MaybeName  ty::TypeModifierExpr  e::Expr  attrs::Attributes
 {
-  top.unifyErrors = \ Location env::Decorated Env -> unifyErrors(top.sourceLocation, env, top.typerep, top.typerep);
+  attachNote extensionGenerated("ableC-unification");
+  top.unifyErrors = \ env::Decorated Env ->
+    attachNote logicalLocationFromOrigin(top) on unifyErrors(env, top.typerep, top.typerep) end;
   top.unifyTransform =
     case name of
     | justName(n) ->
@@ -316,20 +333,22 @@ top::StructDeclarator ::= name::MaybeName  ty::TypeModifierExpr  e::Expr  attrs:
         ableC_Expr { s1.$Name{n} },
         ableC_Expr { s2.$Name{n} },
         justExpr(ableC_Expr { trail }))
-    | nothingName() -> mkIntConst(1, builtin) -- Ignore anonymous padding bits
+    | nothingName() -> mkIntConst(1) -- Ignore anonymous padding bits
     end;
 }
 aspect production warnStructField
 top::StructDeclarator ::= msg::[Message]
 {
-  top.unifyErrors = \ Location env::Decorated Env -> [];
-  top.unifyTransform = mkIntConst(1, builtin);
+  attachNote extensionGenerated("ableC-unification");
+  top.unifyErrors = \ Decorated Env -> [];
+  top.unifyTransform = mkIntConst(1);
 }
 
 abstract production adtUnifyExpr
 top::Expr ::= e1::Expr e2::Expr trail::Expr
 {
   top.pp = pp"unifyDatatype(${e1.pp}, ${e2.pp}, ${trail.pp})";
+  attachNote extensionGenerated("ableC-unification");
   propagate env, controlStmtContext;
   
   local adtLookup::[RefIdItem] =
@@ -359,13 +378,14 @@ attribute unifyTransform<Decls> occurs on ADTDecl;
 aspect production adtDecl
 top::ADTDecl ::= attrs::Attributes n::Name cs::ConstructorList
 {
+  attachNote extensionGenerated("ableC-unification");
   top.unifyErrors =
-    \ l::Location env::Decorated Env ->
+    \ env::Decorated Env ->
       if null(lookupValue(top.unifyFnName, env))
       then
-        case cs.unifyErrors(top.location, addEnv([valueDef(top.unifyFnName, errorValueItem())], env)) of
+        case attachNote logicalLocationFromOrigin(top) on cs.unifyErrors(addEnv([valueDef(top.unifyFnName, errorValueItem())], env)) end of
         | [] -> []
-        | m -> [nested(l, s"In unification of datatype ${top.adtGivenName}", m)]
+        | m -> [nested(getParsedOriginLocationOrFallback(ambientOrigin()), s"In unification of datatype ${top.adtGivenName}", m)]
         end
       else [];
   top.unifyFnName = "_unify_" ++ n.name;
@@ -393,16 +413,16 @@ attribute unifyTransform<ExprClauses> occurs on ConstructorList;
 aspect production consConstructor
 top::ConstructorList ::= c::Constructor cl::ConstructorList
 {
-  top.unifyErrors =
-    \ l::Location env::Decorated Env -> c.unifyErrors(l, env) ++ cl.unifyErrors(l, env);
-  top.unifyTransform =
-    consExprClause(c.unifyTransform, cl.unifyTransform);
+  attachNote extensionGenerated("ableC-unification");
+  top.unifyErrors = \ env::Decorated Env -> c.unifyErrors(env) ++ cl.unifyErrors(env);
+  top.unifyTransform = consExprClause(c.unifyTransform, cl.unifyTransform);
 }
 
 aspect production nilConstructor
 top::ConstructorList ::=
 {
-  top.unifyErrors = \ Location Decorated Env -> [];
+  attachNote extensionGenerated("ableC-unification");
+  top.unifyErrors = \ Decorated Env -> [];
   top.unifyTransform = failureExprClause();
 }
 
@@ -429,21 +449,21 @@ attribute unifyTransform<Expr> occurs on Parameters;
 aspect production consParameters
 top::Parameters ::= h::ParameterDecl t::Parameters
 {
-  top.unifyErrors =
-    \ l::Location env::Decorated Env -> h.unifyErrors(l, env) ++ t.unifyErrors(l, env);
+  attachNote extensionGenerated("ableC-unification");
+  top.unifyErrors = \ env::Decorated Env -> h.unifyErrors(env) ++ t.unifyErrors(env);
   top.unifyPatterns1 = consPattern(h.unifyPattern1, t.unifyPatterns1);
   top.unifyPatterns2 = consPattern(h.unifyPattern2, t.unifyPatterns2);
-  top.unifyTransform =
-    andExpr(h.unifyTransform, t.unifyTransform);
+  top.unifyTransform = andExpr(h.unifyTransform, t.unifyTransform);
 }
 
 aspect production nilParameters
 top::Parameters ::= 
 {
-  top.unifyErrors = \ Location Decorated Env -> [];
+  attachNote extensionGenerated("ableC-unification");
+  top.unifyErrors = \ Decorated Env -> [];
   top.unifyPatterns1 = nilPattern();
   top.unifyPatterns2 = nilPattern();
-  top.unifyTransform = mkIntConst(1, builtin);
+  top.unifyTransform = mkIntConst(1);
 }
 
 synthesized attribute unifyPattern1::Pattern occurs on ParameterDecl;
@@ -453,7 +473,9 @@ attribute unifyTransform<Expr> occurs on ParameterDecl;
 aspect production parameterDecl
 top::ParameterDecl ::= storage::StorageClasses  bty::BaseTypeExpr  mty::TypeModifierExpr  n::MaybeName  attrs::Attributes
 {
-  top.unifyErrors = \ Location env::Decorated Env -> unifyErrors(top.sourceLocation, env, top.typerep, top.typerep);
+  attachNote extensionGenerated("ableC-unification");
+  top.unifyErrors = \ env::Decorated Env -> 
+    attachNote logicalLocationFromOrigin(top) on unifyErrors(env, top.typerep, top.typerep) end;
   
   local varName1::Name = name(fieldName.name ++ "1");
   local varName2::Name = name(fieldName.name ++ "2");
@@ -468,19 +490,19 @@ top::ParameterDecl ::= storage::StorageClasses  bty::BaseTypeExpr  mty::TypeModi
 
 -- Check the given env for the given value name
 function checkUnificationHeaderDef
-[Message] ::= n::String loc::Location env::Decorated Env
+[Message] ::= n::String env::Decorated Env
 {
   return
     if !null(lookupValue(n, env))
     then []
-    else [err(loc, "Missing include of unification.xh")];
+    else [errFromOrigin(ambientOrigin(), "Missing include of unification.xh")];
 }
 -- Check the given env for the given template name
 function checkUnificationHeaderTemplateDef
-[Message] ::= n::String loc::Location env::Decorated Env
+[Message] ::= n::String env::Decorated Env
 {
   return
     if !null(lookupTemplate(n, env))
     then []
-    else [err(loc, "Missing include of unification.xh")];
+    else [errFromOrigin(ambientOrigin(), "Missing include of unification.xh")];
 }

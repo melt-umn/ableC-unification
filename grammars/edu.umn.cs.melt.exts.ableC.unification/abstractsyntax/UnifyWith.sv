@@ -16,7 +16,7 @@ top::Decl ::= ty::TypeName  func::Name
       nilQualifier());
   local type::Type = ty.typerep.defaultFunctionArrayLvalueConversion;
   local localErrors::[Message] = type.errors ++
-    checkUnificationHeaderDef("unification_trail", func.location, top.env) ++
+    checkUnificationHeaderDef("unification_trail", top.env) ++
     func.valueLookupCheck ++
     case getCustomUnify(type, type, top.env) of
     | just(_) -> [errFromOrigin(func,

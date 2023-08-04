@@ -160,7 +160,6 @@ top::Constructor ::= n::Name ps::Parameters
     [templateDef(
        allocateConstructorName,
        constructorTemplateItem(
-         n.location,
          top.templateParameters.names, top.templateParameters.kinds, ps, -- TODO: location should be allocate decl location
          templateVarReferenceConstructorInstDecl(
            name(top.adtGivenName),
@@ -173,10 +172,8 @@ top::ValueItem ::= adtName::Name allocatorName::Name constructorName::Name param
 {
   top.pp = pp"varReferenceConstructorValueItem(${adtName.pp}, ${allocatorName.pp}, ${constructorName.pp})";
   top.typerep = errorType();
-  top.sourceLocation = allocatorName.location;
-  top.directRefHandler =
-    \ n::Name l::Location ->
-      errorExpr([err(l, s"Var reference constructor ${n.name} cannot be referenced, only called directly")]);
+  top.directRefHandler = \ n::Name ->
+    errorExpr([errFromOrigin(n, s"Var reference constructor ${n.name} cannot be referenced, only called directly")]);
   top.directCallHandler =
     varReferenceConstructorCallExpr(adtName, allocatorName, constructorName, paramTypes, _, _);
 }
@@ -185,6 +182,7 @@ abstract production varReferenceConstructorCallExpr
 top::Expr ::= adtName::Name allocatorName::Name constructorName::Name paramTypes::[Type] n::Name args::Exprs
 {
   top.pp = parens(ppConcat([n.pp, parens(ppImplode(cat(comma(), space()), args.pps))]));
+  attachNote extensionGenerated("ableC-unification");
   propagate env, controlStmtContext;
   local localErrors::[Message] = args.errors ++ args.argumentErrors;
   
@@ -196,7 +194,7 @@ top::Expr ::= adtName::Name allocatorName::Name constructorName::Name paramTypes
   
   local adtTypeExpr::BaseTypeExpr = adtTagReferenceTypeExpr(nilQualifier(), adtName);
   local resultTypeExpr::BaseTypeExpr =
-    typeModifierTypeExpr(adtTypeExpr, varTypeExpr(nilQualifier(), baseTypeExpr(), builtin));
+    typeModifierTypeExpr(adtTypeExpr, varTypeExpr(nilQualifier(), baseTypeExpr()));
   local resultName::String = "result_" ++ toString(genInt());
   local fwrd::Expr =
     ableC_Expr {
@@ -231,10 +229,8 @@ top::ValueItem ::= adtName::Name allocatorName::Name constructorName::Name ts::T
 {
   top.pp = pp"templateVarReferenceConstructorInstValueItem(${adtName.pp}, ${allocatorName.pp}, ${constructorName.pp})";
   top.typerep = errorType();
-  top.sourceLocation = allocatorName.location;
-  top.directRefHandler =
-    \ n::Name l::Location ->
-      errorExpr([err(l, s"Var reference constructor ${allocatorName.name}_${adtName.name}<${show(80, ppImplode(pp", ", ts.pps))}> cannot be referenced, only called directly")]);
+  top.directRefHandler = \ n::Name ->
+    errorExpr([errFromOrigin(n, s"Var reference constructor ${allocatorName.name}_${adtName.name}<${show(80, ppImplode(pp", ", ts.pps))}> cannot be referenced, only called directly")]);
   top.directCallHandler =
     templateVarReferenceConstructorInstCallExpr(adtName, allocatorName, constructorName, ts, paramTypes, _, _);
 }
@@ -243,6 +239,7 @@ abstract production templateVarReferenceConstructorInstCallExpr
 top::Expr ::= adtName::Name allocatorName::Name constructorName::Name ts::TemplateArgNames paramTypes::[Type] n::Name args::Exprs
 {
   top.pp = parens(ppConcat([n.pp, parens(ppImplode(cat(comma(), space()), args.pps))]));
+  attachNote extensionGenerated("ableC-unification");
   propagate env, controlStmtContext;
 
   local localErrors::[Message] = args.errors ++ args.argumentErrors;
@@ -256,7 +253,7 @@ top::Expr ::= adtName::Name allocatorName::Name constructorName::Name ts::Templa
   local resultTypeExpr::BaseTypeExpr =
     typeModifierTypeExpr(
       templateTypedefTypeExpr(nilQualifier(), adtName, ts),
-      varTypeExpr(nilQualifier(), baseTypeExpr(), builtin));
+      varTypeExpr(nilQualifier(), baseTypeExpr()));
   local resultName::String = "result_" ++ toString(genInt());
   local fwrd::Expr =
     ableC_Expr {

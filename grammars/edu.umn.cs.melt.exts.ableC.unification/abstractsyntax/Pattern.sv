@@ -4,6 +4,7 @@ abstract production freeVarPattern
 top::Pattern ::=
 {
   propagate errors;
+  attachNote extensionGenerated("ableC-unification");
   top.pp = pp"freevar";
   top.errors <-
     case top.expectedType.withoutAttributes of
@@ -25,6 +26,7 @@ abstract production boundVarPattern
 top::Pattern ::= p::Pattern
 {
   propagate initialEnv, errors;
+  attachNote extensionGenerated("ableC-unification");
   top.pp = pp"?&${p.pp}";
   top.errors <-
     case top.expectedType.withoutAttributes of
