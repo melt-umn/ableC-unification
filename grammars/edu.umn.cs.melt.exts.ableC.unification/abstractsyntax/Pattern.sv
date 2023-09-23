@@ -29,7 +29,7 @@ top::Pattern ::=
 abstract production boundVarPattern
 top::Pattern ::= p::Pattern
 {
-  propagate decls, patternDefs, defs, errors;
+  propagate controlStmtContext, decls, patternDefs, defs, errors;
   top.pp = pp"?&${p.pp}";
   top.errors <-
     case top.expectedType.withoutAttributes of

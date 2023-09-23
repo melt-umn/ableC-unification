@@ -4,6 +4,7 @@ abstract production varReferenceDecl
 top::Decl ::= id::Name  allocator::Name pfx::Maybe<Name>
 {
   top.pp = pp"var_reference datatype ${id.pp} with ${allocator.pp};";
+  propagate env;
   
   local expectedAllocatorType::Type =
     functionType(
@@ -62,6 +63,7 @@ abstract production templateVarReferenceDecl
 top::Decl ::= id::Name  allocator::Name pfx::Maybe<Name>
 {
   top.pp = pp"template var_reference datatype ${id.pp} with ${allocator.pp};";
+  propagate env;
   
   local expectedAllocatorType::Type =
     functionType(
@@ -183,6 +185,7 @@ abstract production varReferenceConstructorCallExpr
 top::Expr ::= adtName::Name allocatorName::Name constructorName::Name paramTypes::[Type] n::Name args::Exprs
 {
   top.pp = parens(ppConcat([n.pp, parens(ppImplode(cat(comma(), space()), args.pps))]));
+  propagate env, controlStmtContext;
   local localErrors::[Message] = args.errors ++ args.argumentErrors;
   
   args.expectedTypes = paramTypes;
@@ -212,6 +215,7 @@ abstract production templateVarReferenceConstructorInstDecl
 top::Decl ::= adtName::Name allocatorName::Name constructorName::Name n::Name ts::TemplateArgNames ps::Parameters
 {
   top.pp = pp"templateVarReferenceConstructorInstDecl ${n.pp};";
+  propagate env, controlStmtContext;
   
   ps.position = 0;
   forwards to
@@ -239,6 +243,8 @@ abstract production templateVarReferenceConstructorInstCallExpr
 top::Expr ::= adtName::Name allocatorName::Name constructorName::Name ts::TemplateArgNames paramTypes::[Type] n::Name args::Exprs
 {
   top.pp = parens(ppConcat([n.pp, parens(ppImplode(cat(comma(), space()), args.pps))]));
+  propagate env, controlStmtContext;
+
   local localErrors::[Message] = args.errors ++ args.argumentErrors;
   
   args.expectedTypes = paramTypes;

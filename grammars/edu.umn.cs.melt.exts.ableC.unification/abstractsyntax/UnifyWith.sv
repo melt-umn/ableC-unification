@@ -4,6 +4,8 @@ abstract production unifyWithDecl
 top::Decl ::= ty::TypeName  func::Name
 {
   top.pp = pp"unify ${ty.pp} with ${func.pp};";
+  propagate env, controlStmtContext;
+
   local fnType::Type = func.valueItem.typerep;
   local unificationTrailTypes::[ValueItem] = lookupValue("unification_trail", top.env);
   local expectedFnType::Type =
