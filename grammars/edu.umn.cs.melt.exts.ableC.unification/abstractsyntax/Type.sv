@@ -72,7 +72,7 @@ top::Type ::=
   top.unifyProd =
     case top.otherType of
     | extType(_, varType(_)) -> valVarUnifyExpr
-    | errorType() -> \ Expr Expr Expr -> errorExpr([])
+    | errorType() -> \ _ _ _ -> errorExpr([])
     | _ -> defaultUnifyExpr
     end;
 }
@@ -81,7 +81,7 @@ aspect production errorType
 top::Type ::= 
 {
   top.unifyErrors = \ _ -> [];
-  top.unifyProd = \ Expr Expr Expr -> errorExpr([]);
+  top.unifyProd = \ _ _ _ -> errorExpr([]);
 }
 
 aspect production extType
