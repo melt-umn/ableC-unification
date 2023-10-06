@@ -276,20 +276,20 @@ aspect production anonStructStructItem
 top::StructItem ::= d::StructDecl
 {
   -- TODO?
-  top.unifyErrors = \ Decorated Env -> [errFromOrigin(d, "Unification is not yet supported for anonymous structs")];
+  top.unifyErrors = \ _ -> [errFromOrigin(d, "Unification is not yet supported for anonymous structs")];
   top.unifyTransform = error("Undefined, should have raised an error");
 }
 aspect production anonUnionStructItem
 top::StructItem ::= d::UnionDecl
 {
-  top.unifyErrors = \ Decorated Env -> [errFromOrigin(d, "Unification is not defined for unions")];
+  top.unifyErrors = \ _ -> [errFromOrigin(d, "Unification is not defined for unions")];
   top.unifyTransform = error("Undefined, should have raised an error");
 }
 aspect production warnStructItem
 top::StructItem ::= msg::[Message]
 {
   attachNote extensionGenerated("ableC-unification");
-  top.unifyErrors = \ Decorated Env -> [];
+  top.unifyErrors = \ _ -> [];
   top.unifyTransform = mkIntConst(1);
 }
 
@@ -304,7 +304,7 @@ aspect production nilStructDeclarator
 top::StructDeclarators ::=
 {
   attachNote extensionGenerated("ableC-unification");
-  top.unifyErrors = \ Decorated Env -> [];
+  top.unifyErrors = \ _ -> [];
   top.unifyTransform = mkIntConst(1);
 }
 
@@ -340,7 +340,7 @@ aspect production warnStructField
 top::StructDeclarator ::= msg::[Message]
 {
   attachNote extensionGenerated("ableC-unification");
-  top.unifyErrors = \ Decorated Env -> [];
+  top.unifyErrors = \ _ -> [];
   top.unifyTransform = mkIntConst(1);
 }
 
@@ -422,7 +422,7 @@ aspect production nilConstructor
 top::ConstructorList ::=
 {
   attachNote extensionGenerated("ableC-unification");
-  top.unifyErrors = \ Decorated Env -> [];
+  top.unifyErrors = \ _ -> [];
   top.unifyTransform = failureExprClause();
 }
 
@@ -460,7 +460,7 @@ aspect production nilParameters
 top::Parameters ::= 
 {
   attachNote extensionGenerated("ableC-unification");
-  top.unifyErrors = \ Decorated Env -> [];
+  top.unifyErrors = \ _ -> [];
   top.unifyPatterns1 = nilPattern();
   top.unifyPatterns2 = nilPattern();
   top.unifyTransform = mkIntConst(1);

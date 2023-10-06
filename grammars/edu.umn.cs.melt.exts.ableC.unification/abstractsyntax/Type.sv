@@ -80,7 +80,7 @@ top::Type ::=
 aspect production errorType
 top::Type ::= 
 {
-  top.unifyErrors = \ Decorated Env -> [];
+  top.unifyErrors = \ _ -> [];
   top.unifyProd = \ Expr Expr Expr -> errorExpr([]);
 }
 
@@ -94,9 +94,9 @@ top::Type ::= q::Qualifiers  sub::ExtType
 aspect default production
 top::ExtType ::=
 {
-  top.unifyErrors = \ Decorated Env ->
+  top.unifyErrors = \ _ ->
     [errFromOrigin(ambientOrigin, s"Unification is not defined for types ${showType(extType(top.givenQualifiers, top))}, ${showType(top.otherType)}")];
-  top.unifyProd = \ Expr Expr Expr -> errorExpr([]);
+  top.unifyProd = \ _ _ _ -> errorExpr([]);
 }
 
 abstract production varType
@@ -159,7 +159,7 @@ top::ExtType ::= sub::Type
   top.unifyProd =
     case top.otherType of
     | extType(_, varType(_)) -> varVarUnifyExpr
-    | errorType() -> \ Expr Expr Expr -> errorExpr([])
+    | errorType() -> \ _ _ _ -> errorExpr([])
     | _ -> varValUnifyExpr
     end;
 }
@@ -182,7 +182,7 @@ top::ExtType ::=
   top.unifyProd =
     case top.otherType of
     | extType(_, varType(_)) -> valVarUnifyExpr
-    | errorType() -> \ Expr Expr Expr -> errorExpr([])
+    | errorType() -> \ _ _ _ -> errorExpr([])
     | _ -> defaultUnifyExpr
     end;
 }
@@ -206,7 +206,7 @@ top::ExtType ::= ref::Decorated EnumDecl
   top.unifyProd =
     case top.otherType of
     | extType(_, varType(_)) -> valVarUnifyExpr
-    | errorType() -> \ Expr Expr Expr -> errorExpr([])
+    | errorType() -> \ _ _ _ -> errorExpr([])
     | _ -> defaultUnifyExpr
     end;
 }
@@ -239,7 +239,7 @@ top::ExtType ::= kwd::StructOrEnumOrUnion  _  refId::String
     case top.otherType of
     | extType(_, refIdExtType(_, _, _)) -> structUnifyExpr
     | extType(_, varType(_)) -> valVarUnifyExpr
-    | _ -> \ Expr Expr Expr -> errorExpr([])
+    | _ -> \ _ _ _ -> errorExpr([])
     end;
 }
 
@@ -269,7 +269,7 @@ top::ExtType ::= adtName::String adtDeclName::String refId::String
     case top.otherType of
     | extType(_, adtExtType(_, _, _)) -> adtUnifyExpr
     | extType(_, varType(_)) -> valVarUnifyExpr
-    | _ -> \ Expr Expr Expr -> errorExpr([])
+    | _ -> \ _ _ _ -> errorExpr([])
     end;
 }
 
