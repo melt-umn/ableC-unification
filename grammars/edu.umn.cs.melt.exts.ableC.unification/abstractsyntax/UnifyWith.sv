@@ -16,15 +16,15 @@ top::Decl ::= ty::TypeName  func::Name
       nilQualifier());
   local type::Type = ty.typerep.defaultFunctionArrayLvalueConversion;
   local localErrors::[Message] = type.errors ++
-    checkUnificationHeaderDef("unification_trail", func.location, top.env) ++
+    checkUnificationHeaderDef("unification_trail", top.env) ++
     func.valueLookupCheck ++
     case getCustomUnify(type, type, top.env) of
-    | just(_) -> [err(func.location,
+    | just(_) -> [errFromOrigin(func,
                       show(80, pp"unify for ${ty.pp} already defined"))]
     | nothing() -> []
     end ++
     if !null(unificationTrailTypes) && !compatibleTypes(fnType, expectedFnType, false, false)
-    then [err(func.location, s"unify function for ${showType(type)} must have type ${showType(expectedFnType)} (got ${showType(fnType)})")]
+    then [errFromOrigin(func, s"unify function for ${showType(type)} must have type ${showType(expectedFnType)} (got ${showType(fnType)})")]
     else [];
   forwards to
     if null(localErrors)

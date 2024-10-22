@@ -18,14 +18,14 @@ top::Decl ::= id::Name  allocator::Name pfx::Maybe<Name>
     | adtRefIdTagItem(refId) :: _ ->
       case lookupRefId(refId, top.env) of
       | adtRefIdItem(_) :: _ -> []
-      | _ -> [err(id.location, "datatype " ++ id.name ++ " does not have a definition")]
+      | _ -> [errFromOrigin(id, "datatype " ++ id.name ++ " does not have a definition")]
       end
-    | _ -> [err(id.location, "Tag " ++ id.name ++ " is not a datatype")]
+    | _ -> [errFromOrigin(id, "Tag " ++ id.name ++ " is not a datatype")]
     end;
   local localErrors::[Message] =
     adtLookupErrors ++ allocator.valueLookupCheck ++
     (if !compatibleTypes(expectedAllocatorType, allocator.valueItem.typerep, true, false)
-     then [err(allocator.location, s"Allocator must have type void *(unsigned long) (got ${showType(allocator.valueItem.typerep)})")]
+     then [errFromOrigin(allocator, s"Allocator must have type void *(unsigned long) (got ${showType(allocator.valueItem.typerep)})")]
      else []);
   
   local adtLookup::Decorated ADTDecl =
@@ -75,12 +75,12 @@ top::Decl ::= id::Name  allocator::Name pfx::Maybe<Name>
   local adtLookupErrors::[Message] =
     case lookupTemplate(id.name, top.env) of
     | adtTemplateItem(params, adt) :: _ -> []
-    | _ -> [err(id.location, id.name ++ " is not a template datatype")]
+    | _ -> [errFromOrigin(id, id.name ++ " is not a template datatype")]
     end;
   local localErrors::[Message] =
     adtLookupErrors ++ allocator.valueLookupCheck ++
     (if !compatibleTypes(expectedAllocatorType, allocator.valueItem.typerep, true, false)
-     then [err(allocator.location, s"Allocator must have type void *(unsigned long) (got ${showType(allocator.valueItem.typerep)})")]
+     then [errFromOrigin(allocator, s"Allocator must have type void *(unsigned long) (got ${showType(allocator.valueItem.typerep)})")]
      else []);
   
   local adtLookup::Decorated ADTDecl =
@@ -153,17 +153,16 @@ top::Constructor ::= n::Name ps::Parameters
     [valueDef(
        allocateConstructorName,
        varReferenceConstructorValueItem(
-         name(top.adtGivenName, location=builtin),
+         name(top.adtGivenName),
          top.allocatorName, n, ps.typereps))];
   top.varReferenceErrorDefs = [valueDef(allocateConstructorName, errorValueItem())];
   top.templateVarReferenceDefs =
     [templateDef(
        allocateConstructorName,
        constructorTemplateItem(
-         n.location,
          top.templateParameters.names, top.templateParameters.kinds, ps, -- TODO: location should be allocate decl location
          templateVarReferenceConstructorInstDecl(
-           name(top.adtGivenName, location=builtin),
+           name(top.adtGivenName),
            top.allocatorName, n, _, top.templateParameters.asTemplateArgNames, ps)))];
   top.templateVarReferenceErrorDefs = [templateDef(allocateConstructorName, errorTemplateItem())];
 }
@@ -173,30 +172,29 @@ top::ValueItem ::= adtName::Name allocatorName::Name constructorName::Name param
 {
   top.pp = pp"varReferenceConstructorValueItem(${adtName.pp}, ${allocatorName.pp}, ${constructorName.pp})";
   top.typerep = errorType();
-  top.sourceLocation = allocatorName.location;
-  top.directRefHandler =
-    \ n::Name l::Location ->
-      errorExpr([err(l, s"Var reference constructor ${n.name} cannot be referenced, only called directly")], location=builtin);
+  top.directRefHandler = \ n::Name ->
+    errorExpr([errFromOrigin(n, s"Var reference constructor ${n.name} cannot be referenced, only called directly")]);
   top.directCallHandler =
-    varReferenceConstructorCallExpr(adtName, allocatorName, constructorName, paramTypes, _, _, location=_);
+    varReferenceConstructorCallExpr(adtName, allocatorName, constructorName, paramTypes, _, _);
 }
 
 abstract production varReferenceConstructorCallExpr
 top::Expr ::= adtName::Name allocatorName::Name constructorName::Name paramTypes::[Type] n::Name args::Exprs
 {
   top.pp = parens(ppConcat([n.pp, parens(ppImplode(cat(comma(), space()), args.pps))]));
+  attachNote extensionGenerated("ableC-unification");
   propagate env, controlStmtContext;
   local localErrors::[Message] = args.errors ++ args.argumentErrors;
   
   args.expectedTypes = paramTypes;
   args.argumentPosition = 1;
-  args.callExpr = decorate declRefExpr(n, location=n.location) with {env = top.env; 
+  args.callExpr = decorate declRefExpr(n) with {env = top.env; 
     controlStmtContext = top.controlStmtContext;};
   args.callVariadic = false;
   
   local adtTypeExpr::BaseTypeExpr = adtTagReferenceTypeExpr(nilQualifier(), adtName);
   local resultTypeExpr::BaseTypeExpr =
-    typeModifierTypeExpr(adtTypeExpr, varTypeExpr(nilQualifier(), baseTypeExpr(), builtin));
+    typeModifierTypeExpr(adtTypeExpr, varTypeExpr(nilQualifier(), baseTypeExpr()));
   local resultName::String = "result_" ++ toString(genInt());
   local fwrd::Expr =
     ableC_Expr {
@@ -231,32 +229,31 @@ top::ValueItem ::= adtName::Name allocatorName::Name constructorName::Name ts::T
 {
   top.pp = pp"templateVarReferenceConstructorInstValueItem(${adtName.pp}, ${allocatorName.pp}, ${constructorName.pp})";
   top.typerep = errorType();
-  top.sourceLocation = allocatorName.location;
-  top.directRefHandler =
-    \ n::Name l::Location ->
-      errorExpr([err(l, s"Var reference constructor ${allocatorName.name}_${adtName.name}<${show(80, ppImplode(pp", ", ts.pps))}> cannot be referenced, only called directly")], location=builtin);
+  top.directRefHandler = \ n::Name ->
+    errorExpr([errFromOrigin(n, s"Var reference constructor ${allocatorName.name}_${adtName.name}<${show(80, ppImplode(pp", ", ts.pps))}> cannot be referenced, only called directly")]);
   top.directCallHandler =
-    templateVarReferenceConstructorInstCallExpr(adtName, allocatorName, constructorName, ts, paramTypes, _, _, location=_);
+    templateVarReferenceConstructorInstCallExpr(adtName, allocatorName, constructorName, ts, paramTypes, _, _);
 }
 
 abstract production templateVarReferenceConstructorInstCallExpr
 top::Expr ::= adtName::Name allocatorName::Name constructorName::Name ts::TemplateArgNames paramTypes::[Type] n::Name args::Exprs
 {
   top.pp = parens(ppConcat([n.pp, parens(ppImplode(cat(comma(), space()), args.pps))]));
+  attachNote extensionGenerated("ableC-unification");
   propagate env, controlStmtContext;
 
   local localErrors::[Message] = args.errors ++ args.argumentErrors;
   
   args.expectedTypes = paramTypes;
   args.argumentPosition = 1;
-  args.callExpr = decorate declRefExpr(n, location=n.location) with {env = top.env; 
+  args.callExpr = decorate declRefExpr(n) with {env = top.env; 
     controlStmtContext = top.controlStmtContext;};
   args.callVariadic = false;
   
   local resultTypeExpr::BaseTypeExpr =
     typeModifierTypeExpr(
       templateTypedefTypeExpr(nilQualifier(), adtName, ts),
-      varTypeExpr(nilQualifier(), baseTypeExpr(), builtin));
+      varTypeExpr(nilQualifier(), baseTypeExpr()));
   local resultName::String = "result_" ++ toString(genInt());
   local fwrd::Expr =
     ableC_Expr {

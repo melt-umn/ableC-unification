@@ -17,5 +17,3 @@ imports edu:umn:cs:melt:exts:ableC:algebraicDataTypes:patternmatching:abstractsy
 imports edu:umn:cs:melt:exts:ableC:templating:abstractsyntax;
 imports edu:umn:cs:melt:exts:ableC:string:abstractsyntax;
 imports edu:umn:cs:melt:exts:ableC:vector:abstractsyntax;
-
-global builtin::Location = builtinLoc("unification");
