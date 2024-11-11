@@ -1,4 +1,5 @@
 #include <unification.xh>
+#include <string.xh>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -8,8 +9,6 @@ datatype Tree {
 };
 
 int foo(float);
-
-var_reference datatype Tree with foo; // Bad allocator
 
 datatype Foo {
   B(datatype Bar ?b);
@@ -21,10 +20,12 @@ datatype Bar {
   B1(struct bar ?b);
 };
 
+allocate_using heap;
+
 int main() {
-  datatype Tree ?a = alloca_Node(alloca_Leaf(42), freevar<datatype Tree>(alloca));
+  datatype Tree ?a = new var(Node(new var(Leaf(42), new var<datatype Tree>())));
   printf("%s\n", show(a).text);
-  datatype Tree ?b = alloca_Node(freevar<datatype Tree>(alloca), alloca_Node(alloca_Leaf(25), freevar<datatype Tree>(alloca)));
+  datatype Tree ?b = new var(Node(new var<datatype Tree>(), new var(Node(new var(Leaf(25)), new var<datatype Tree>()))));
   printf("%s\n", show(b).text);
 
   int trail; // Invalid type to unify

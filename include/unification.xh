@@ -1,4 +1,3 @@
-#include <string.xh>
 #include <vector.xh>
 #include <alloca.h>
 #include <stdlib.h>
@@ -76,52 +75,49 @@ a ?base_var(a ?var) {
 }
 
 template<typename a>
-string show_var(a ?var) {
+size_t show_var_max_len(a ?var) {
   match ((void *)var, var) {
     NULL, _ -> {
-      return str("<var (nil)>");
+      return 11;
     }
     _, freevar -> {
-      char buffer[24];
-      sprintf(buffer, "<var %x>", (union {a ?v; unsigned n;}){.v = base_var(var)}.n);
-      return str(buffer);
+      return MAX_POINTER_STR_LEN + 6;
     }
     _, ?&val -> {
-      return show(val);
+      return showMaxLen(val);
     }
   }
 }
 
 template<typename a>
-string str_var(a ?var) {
+size_t show_var(char *buffer, a ?var) {
   match ((void *)var, var) {
     NULL, _ -> {
-      return str("<var (nil)>");
+      return sprintf(buffer, "<var (nil)>");
     }
     _, freevar -> {
-      char buffer[24];
-      sprintf(buffer, "<var %x>", (union {a ?v; unsigned n;}){.v = base_var(var)}.n);
-      return str(buffer);
+      return sprintf(buffer, "<var %p>", (union {a ?v; void *p;}){.v = base_var(var)}.p);
     }
     _, ?&val -> {
-      return str(val);
+      return showToBuf(buffer, val);
     }
   }
 }
 
 datatype _trail_action {
   _Sub(enum _var_d_tag *tag);
-  _Action(closure<(void) -> void> action, void (*freeFn)(void *));
+  _Action(closure<(void) -> void> action);
 }
 
 typedef vector<datatype _trail_action> unification_trail;
 
-static inline unification_trail new_trail(void) {
-  return new unification_trail(0, _Sub(NULL), malloc, realloc, free);
+static inline unification_trail new_trail(arena_t ar) {
+  allocate_using arena ar;
+  return new vector<datatype _trail_action>(0);
 }
 
-static inline void push_action(unification_trail trail, closure<(void) -> void> action, void (*freeFn)(void *)) {
-  trail.append(_Action(action, freeFn));
+static inline void push_action(unification_trail trail, closure<(void) -> void> action) {
+  trail.append(_Action(action));
 }
 
 static inline void undo_trail(unification_trail trail, size_t index) {
@@ -130,11 +126,8 @@ static inline void undo_trail(unification_trail trail, size_t index) {
       _Sub(tag) -> {
         *tag = _var_d__Free;
       }
-      _Action(action, freeFn) -> {
+      _Action(action) -> {
         action();
-        if (freeFn) {
-          action.free(*freeFn);
-        }
       }
     }
   }

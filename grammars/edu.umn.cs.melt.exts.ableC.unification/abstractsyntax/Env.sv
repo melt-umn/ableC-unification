@@ -4,33 +4,33 @@ grammar edu:umn:cs:melt:exts:ableC:unification:abstractsyntax;
 -- English, but "unifies" looks like a verb, which is more confusing.
 synthesized attribute customUnifys::Scopes<Name> occurs on Env;
 
-aspect production emptyEnv_i
+aspect production emptyEnv
 top::Env ::=
 {
   top.customUnifys = emptyScope();
 }
-aspect production addEnv_i
-top::Env ::= d::Defs  e::Decorated Env
+aspect production addDefsEnv
+top::Env ::= d::Defs  e::Env
 {
   top.customUnifys = addGlobalScope(gd.customUnifyContribs, addScope(d.customUnifyContribs, e.customUnifys));
 }
-aspect production openScopeEnv_i
-top::Env ::= e::Decorated Env
+aspect production openScopeEnv
+top::Env ::= e::Env
 {
   top.customUnifys = openScope(e.customUnifys);
 }
-aspect production globalEnv_i
-top::Env ::= e::Decorated Env
+aspect production globalEnv
+top::Env ::= e::Env
 {
   top.customUnifys = globalScope(e.customUnifys);
 }
-aspect production nonGlobalEnv_i
-top::Env ::= e::Decorated Env
+aspect production nonGlobalEnv
+top::Env ::= e::Env
 {
   top.customUnifys = nonGlobalScope(e.customUnifys);
 }
-aspect production functionEnv_i
-top::Env ::= e::Decorated Env
+aspect production functionEnv
+top::Env ::= e::Env
 {
   top.customUnifys = functionScope(e.customUnifys);
 }
@@ -57,18 +57,14 @@ top::Def ::=
 abstract production customUnifyDef
 top::Def ::= t::Type showFunctionName::Name
 {
-  top.customUnifyContribs = [(t.withoutTypeQualifiers.mangledName, showFunctionName)];
+  top.customUnifyContribs = [(t.withoutTypeQualifiers.mangledName, ^showFunctionName)];
 }
 
-function getCustomUnify
-Maybe<Name> ::= t1::Type  t2::Type  e::Decorated Env
-{
-  return
-    if compatibleTypes(t1, t2, false, false) then
-      case lookupScope(t1.withoutTypeQualifiers.mangledName, e.customUnifys) of
-      | [] -> nothing()
-      | customUnify :: _ -> just(customUnify)
-      end
-    else
-      nothing();
-}
+fun getCustomUnify Maybe<Name> ::= t1::Type  t2::Type  e::Env =
+  if compatibleTypes(t1, t2, false, false) then
+    case lookupScope(t1.withoutTypeQualifiers.mangledName, e.customUnifys) of
+    | [] -> nothing()
+    | customUnify :: _ -> just(customUnify)
+    end
+  else
+    nothing();

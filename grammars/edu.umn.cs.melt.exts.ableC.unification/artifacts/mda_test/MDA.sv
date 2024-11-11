@@ -1,19 +1,15 @@
-grammar determinism;
+grammar edu:umn:cs:melt:exts:ableC:unification:artifacts:mda_test;
 
 {- This Silver specification does not generate a useful working 
    compiler, it only serves as a grammar for running the modular
    determinism analysis.
  -}
 
-import edu:umn:cs:melt:ableC:concretesyntax;
 import edu:umn:cs:melt:ableC:host;
+import edu:umn:cs:melt:ableC:concretesyntax;
 
 copper_mda testUnification(ablecParser) {
   edu:umn:cs:melt:exts:ableC:unification:concretesyntax:unification;
-}
-
-copper_mda testAllocation(ablecParser) {
-  edu:umn:cs:melt:exts:ableC:unification:concretesyntax:allocation;
 }
 
 -- Since unification is an extension (E2) to a nonterminal introduced by another
@@ -31,4 +27,3 @@ parser ableCWithPatternMatching :: Root {
 copper_mda testPatternMatching(ableCWithPatternMatching) {
   edu:umn:cs:melt:exts:ableC:unification:concretesyntax:patternmatching;
 }
-

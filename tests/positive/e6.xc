@@ -1,4 +1,5 @@
 #include <unification.xh>
+#include <string.xh>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -8,15 +9,15 @@ datatype Tree {
   Leaf(a val);
 };
 
-template var_reference datatype Tree with alloca prefix a;
-
 int main() {
-  Tree<int> ?a = aNode(aLeaf(42), freevar<Tree<int>>(alloca));
+  allocate_using heap;
+  unification_trail trail = new_trail(arena_create());
+
+  Tree<int> ?a = new var(Node(new var(Leaf(42)), new var<Tree<int>>()));
   printf("%s\n", show(a).text);
-  Tree<int> ?b = aNode(freevar<Tree<int>>(alloca), aNode(aLeaf(25), freevar<Tree<int>>(alloca)));
+  Tree<int> ?b = new var(Node(new var<Tree<int>>(), new var(Node(new var(Leaf(25)), new var<Tree<int>>()))));
   printf("%s\n", show(b).text);
 
-  unification_trail trail = new unification_trail();
   if (unify(a, b, trail)) {
     printf("%lu\n", trail.size);
     if (trail.size != 2)

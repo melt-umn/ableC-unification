@@ -1,4 +1,5 @@
 #include <unification.xh>
+#include <string.xh>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -8,27 +9,27 @@ datatype Tree {
   Leaf(a val);
 };
 
-template var_reference datatype Tree with alloca;
-
 int main() {
-  Tree<int> ?a = alloca_Node(alloca_Leaf(42), freevar<Tree<int>>(alloca));
-  printf("%s\n", show(a).text);
-  Tree<int> ?b = alloca_Node(freevar<Tree<int>>(alloca), alloca_Node(alloca_Leaf(25), freevar<Tree<int>>(alloca)));
-  printf("%s\n", show(b).text);
+  with_arena ar {
+    Tree<int> ?a = new var(Node(new var(Leaf(42)), new var<Tree<int>>()));
+    printf("%s\n", show(a).text);
+    Tree<int> ?b = new var(Node(new var<Tree<int>>(), new var(Node(new var(Leaf(25)), new var<Tree<int>>()))));
+    printf("%s\n", show(b).text);
 
-  unification_trail trail = new unification_trail();
-  if (unify(a, b, trail)) {
-    printf("%lu\n", trail.size);
-    if (trail.size != 2)
-      return 2;
+    unification_trail trail = {};
+    if (unify(a, b, trail)) {
+      printf("%lu\n", trail.size);
+      if (trail.size != 2)
+        return 2;
+      printf("%s\n", show(a).text);
+      printf("%s\n", show(b).text);
+    } else {
+      printf("fail\n");
+      return 1;
+    }
+
+    undo_trail(trail, 0);
     printf("%s\n", show(a).text);
     printf("%s\n", show(b).text);
-  } else {
-    printf("fail\n");
-    return 1;
   }
-
-  undo_trail(trail, 0);
-  printf("%s\n", show(a).text);
-  printf("%s\n", show(b).text);
 }

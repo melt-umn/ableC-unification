@@ -18,20 +18,22 @@ bool unifyFoo(struct foo l, struct foo r, unification_trail trail) {
 unify struct foo with unifyFoo;
 
 int main() {
-  struct foo ?a = boundvar(alloca, (struct foo) {
-    .bar = freevar<struct notDefinedHere*>(alloca),
-    .n = boundvar(alloca, 5),
-  });
-  struct foo ?b = boundvar(alloca, (struct foo) {
-    .bar = freevar<struct notDefinedHere*>(alloca),
-    .n = freevar<int>(alloca),
-  });
+  with_arena ar {
+    struct foo ?a = new var((struct foo) {
+      .bar = new var<struct notDefinedHere*>(),
+      .n = new var(5),
+    });
+    struct foo ?b = new var((struct foo) {
+      .bar = new var<struct notDefinedHere*>(),
+      .n = new var<int>(),
+    });
 
-  unification_trail trail = new unification_trail();
-  assert(unify(a, b, trail));
+    unification_trail trail = {};
+    assert(unify(a, b, trail));
 
-  assert(value(value(a).n) == 5);
-  assert(!is_bound(value(b).n));
+    assert(value(value(a).n) == 5);
+    assert(!is_bound(value(b).n));
+  }
 
   return 0;
 }

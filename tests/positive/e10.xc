@@ -9,6 +9,7 @@ struct foo {
 struct bar { int x; };
 
 int main() {
-  struct bar ?g = freevar<struct bar>(alloca), h = {42};
+  allocate_using heap;
+  struct bar ?g = new var<struct bar>(), h = {42};
   unify(g, h);
 }

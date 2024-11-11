@@ -10,10 +10,10 @@ top::Pattern ::=
     case top.expectedType.withoutAttributes of
     | extType(_, varType(_)) -> []
     | errorType() -> []
-    | _ -> [errFromOrigin(top, s"freevar pattern expected to match var reference type (got ${showType(top.expectedType)})")]
+    | _ -> [errFromOrigin(top, s"freevar pattern expected to match var reference type (got ${show(80, top.expectedType)})")]
     end;
   
-  local subType::Type = varSubType(top.expectedType.withoutAttributes);
+  nondecorated local subType::Type = varSubType(top.expectedType.withoutAttributes);
   
   top.transform =
     ableC_Expr {
@@ -32,10 +32,10 @@ top::Pattern ::= p::Pattern
     case top.expectedType.withoutAttributes of
     | extType(_, varType(_)) -> []
     | errorType() -> []
-    | _ -> [errFromOrigin(p, s"Bound var pattern expected to match var reference type (got ${showType(top.expectedType)})")]
+    | _ -> [errFromOrigin(p, s"Bound var pattern expected to match var reference type (got ${show(80, top.expectedType)})")]
     end;
   
-  local subType::Type = varSubType(top.expectedType.withoutAttributes);
+  nondecorated local subType::Type = varSubType(top.expectedType.withoutAttributes);
   p.expectedType = subType;
 
   top.patternDecls = @p.patternDecls;

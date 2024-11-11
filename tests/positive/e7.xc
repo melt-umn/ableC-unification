@@ -1,16 +1,23 @@
 #include <unification.xh>
+#include <string.xh>
 #include <stdio.h>
 #include <stdlib.h>
+#include <alloca.h>
 
 typedef struct foo *foo;
 
-string showFoo(foo f) {
-  return str("Foo");
+size_t showFooMaxLen(foo f) {
+  return 3;
 }
 
-show foo with showFoo;
+size_t showFoo(char *buf, foo f) {
+  return sprintf(buf, "foo");
+}
+
+show foo with showFooMaxLen, showFoo;
 
 int main() {
-  printf("%s\n", show(freevar<foo>(alloca)).text);
-  printf("%s\n", show(boundvar(alloca, (foo)NULL)).text);
+  allocate_using stack;
+  printf("%s\n", show(new var<foo>()).text);
+  printf("%s\n", show(new var((foo)NULL)).text);
 }

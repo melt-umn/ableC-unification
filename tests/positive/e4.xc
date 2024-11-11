@@ -1,4 +1,6 @@
 #include <unification.xh>
+#include <string.xh>
+#include <alloca.h>
 
 template<typename a>
 struct list {
@@ -7,11 +9,12 @@ struct list {
 };
 
 int main() {
-  list<int> l1 = {1, freevar<list<int>>(alloca)};
-  list<int> l2 = {2, boundvar(alloca, l1)};
-  list<int> l3 = {3, boundvar(alloca, l2)};
-  list<int> l4 = {2, freevar<list<int>>(alloca)};
-  list<int> l5 = {3, boundvar(alloca, l4)};
+  allocate_using stack;
+  list<int> l1 = {1, new var<list<int>>()};
+  list<int> l2 = {2, new var(l1)};
+  list<int> l3 = {3, new var(l2)};
+  list<int> l4 = {2, new var<list<int>>()};
+  list<int> l5 = {3, new var(l4)};
 
   printf("%s\n", show(l3).text);
   printf("%s\n", show(l5).text);

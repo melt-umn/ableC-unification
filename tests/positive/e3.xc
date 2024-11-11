@@ -1,7 +1,9 @@
 #include <unification.xh>
+#include <string.xh>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <alloca.h>
 
 typedef datatype Type ?Type;
 
@@ -12,42 +14,55 @@ datatype Type {
   Bool();
 };
 
-var_reference datatype Type with GC_malloc;
-
-string showType(Type t) {
+size_t showTypeMaxLen(Type t) {
   match (t) {
-    freevar -> {
-      char buffer[sizeof(short) * 2 + 2];
-      sprintf(buffer, "a%hx", (union {Type t; short n;}){.t = t}.n);
-      return str(buffer);
-    }
-    ?&Fn(param@?&Fn(_, _), res) -> {
-      return "(" + showType(param) + ") -> " + showType(res);
-    }
     ?&Fn(param, res) -> {
-      return showType(param) + " -> " + showType(res);
+      return showMaxLen(param) + showMaxLen(res) + 6;
     }
     ?&List(elem) -> {
-      return "[" + showType(elem) + "]";
+      return showMaxLen(elem) + 2;
     }
-    ?&Int() -> {
-      return str("int");
-    }
-    ?&Bool() -> {
-      return str("bool");
+    _ -> {
+      return 5;
     }
   }
 }
 
-show Type with showType;
-
-Type freshType() {
-  return freevar<datatype Type>(GC_malloc);
+size_t showType(char *buf, Type t) {
+  match (t) {
+    freevar -> {
+      return sprintf(buf, "a%hx", (union {Type t; short n;}){.t = t}.n);
+    }
+    ?&Fn(param@?&Fn(_, _), res) -> {
+      return buildStr(buf, "(" + show(param) + ") -> " + show(res));
+    }
+    ?&Fn(param, res) -> {
+      return buildStr(buf, show(param) + " -> " + show(res));
+    }
+    ?&List(elem) -> {
+      return buildStr(buf, "[" + show(elem) + "]");
+    }
+    ?&Int() -> {
+      return sprintf(buf, "int");
+    }
+    ?&Bool() -> {
+      return sprintf(buf, "bool");
+    }
+  }
 }
 
-Type appType(Type f, Type a) {
-  Type res = freshType();
+show Type with showTypeMaxLen, showType;
+
+Type freshType(arena_t ar) {
+  allocate_using arena ar;
+  return new var<datatype Type>();
+}
+
+Type appType(Type f, Type a, arena_t ar) {
+  allocate_using arena ar;
+  Type res = freshType(ar);
   if (!unify(f, Fn(a, res))) {
+    allocate_using stack;
     printf("Type error applying %s to %s\n", show(f).text, show(a).text);
     exit(1);
   }
@@ -57,27 +72,29 @@ Type appType(Type f, Type a) {
 // This example doesn't do freshening - see ableC-rewriting/examples/e3.xc
 
 int main() {
-  // map :: (a -> b) -> [a] -> [b]
-  Type a = freshType();
-  Type b = freshType();
-  Type map = GC_malloc_Fn(GC_malloc_Fn(a, b), GC_malloc_Fn(GC_malloc_List(a), GC_malloc_List(b)));
-  printf("map :: %s\n", show(map).text);
+  with_arena ar {
+    // map :: (a -> b) -> [a] -> [b]
+    Type a = freshType(ar);
+    Type b = freshType(ar);
+    Type map = new var(Fn(new var(Fn(a, b)), new var(Fn(new var(List(a)), new var(List(b))))));
+    printf("map :: %s\n", show(map).text);
 
-  // length :: [c] -> int
-  Type c = freshType();
-  Type length = GC_malloc_Fn(GC_malloc_List(c), GC_malloc_Int());
-  printf("length :: %s\n", show(length).text);
+    // length :: [c] -> int
+    Type c = freshType(ar);
+    Type length = new var(Fn(new var(List(c)), new var(Int())));
+    printf("length :: %s\n", show(length).text);
 
-  // res = map length
-  Type res = appType(map, length);
-  printf("map length :: %s\n", show(res).text);
+    // res = map length
+    Type res = appType(map, length, ar);
+    printf("map length :: %s\n", show(res).text);
 
-  // res :: int -> int
-  // Should fail
-  if (unify(res, GC_malloc_Fn(GC_malloc_Int(), GC_malloc_Int()))) {
-    printf("res :: %s\n", show(res).text);
-    return 2;
-  } else {
-    printf("type error\n");
+    // res :: int -> int
+    // Should fail
+    if (unify(res, new var(Fn(new var(Int()), new var(Int()))))) {
+      printf("res :: %s\n", show(res).text);
+      return 2;
+    } else {
+      printf("type error\n");
+    }
   }
 }

@@ -1,4 +1,5 @@
 #include <unification.xh>
+#include <string.xh>
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -61,35 +62,37 @@ bool unifyRational(rational l, rational r, unification_trail trail) {
 unify rational with unifyRational;
 
 int main() {
-  rational ?a = boundvar(alloca, (rational) {
-    .num = boundvar(alloca, 2),
-    .den = boundvar(alloca, 3),
-  });
-  rational ?b = boundvar(alloca, (rational) {
-    .num = boundvar(alloca, 6),
-    .den = freevar<int>(alloca),
-  });
-  rational ?c = boundvar(alloca, (rational) {
-    .num = freevar<int>(alloca),
-    .den = boundvar(alloca, 6),
-  });
-  rational ?d = boundvar(alloca, (rational) {
-    .num = freevar<int>(alloca),
-    .den = freevar<int>(alloca),
-  });
-  rational ?e = freevar<rational>(alloca);
+  with_arena ar {
+    rational ?a = new var((rational) {
+      .num = new var(2),
+      .den = new var(3),
+    });
+    rational ?b = new var((rational) {
+      .num = new var(6),
+      .den = new var<int>(),
+    });
+    rational ?c = new var((rational) {
+      .num = new var<int>(),
+      .den = new var(6),
+    });
+    rational ?d = new var((rational) {
+      .num = new var<int>(),
+      .den = new var<int>(),
+    });
+    rational ?e = new var<rational>();
 
-  unification_trail trail = new unification_trail();
-  assert(unify(a, b, trail));
-  assert(unify(a, c, trail));
-  assert(unify(a, d, trail));
-  assert(unify(a, e, trail));
+    unification_trail trail = {};
+    assert(unify(a, b, trail));
+    assert(unify(a, c, trail));
+    assert(unify(a, d, trail));
+    assert(unify(a, e, trail));
 
-  assert(show(a) == str("{.num = 2, .den = 3}"));
-  assert(show(b) == str("{.num = 6, .den = 9}"));
-  assert(show(c) == str("{.num = 4, .den = 6}"));
-  assert(show(d) == str("{.num = 2, .den = 3}"));
-  assert(show(e) == str("{.num = 2, .den = 3}"));
+    assert(show(a) == str("{.num = 2, .den = 3}"));
+    assert(show(b) == str("{.num = 6, .den = 9}"));
+    assert(show(c) == str("{.num = 4, .den = 6}"));
+    assert(show(d) == str("{.num = 2, .den = 3}"));
+    assert(show(e) == str("{.num = 2, .den = 3}"));
+  }
 
   return 0;
 }
