@@ -103,12 +103,25 @@ top::Expr ::= e1::Expr e2::Expr trail::Expr
 abstract production customUnifyExpr implements Unify
 top::Expr ::= e1::Expr e2::Expr trail::Expr fn::Name
 {
-  top.pp = pp"unifyCustom(${e1.pp}, ${e2.pp}, ${trail.pp})";
+  top.pp = pp"unifyCustom(${fn}, ${e1.pp}, ${e2.pp}, ${trail.pp})";
   attachNote extensionGenerated("ableC-unification");
   
   forwards to
     ableC_Expr {
       $Name{@fn}($Expr{@e1}, $Expr{@e2}, $Expr{@trail})
+    };
+}
+
+abstract production customTemplateUnifyExpr implements Unify
+top::Expr ::= e1::Expr e2::Expr trail::Expr fn::Name ty::Type
+{
+  top.pp = pp"unifyCustom(${fn}, ${ty.lpp}${ty.rpp}, ${e1.pp}, ${e2.pp}, ${trail.pp})";
+  attachNote extensionGenerated("ableC-unification");
+  
+  nondecorated local targ::TypeName = typeName(ty.baseTypeExpr, ty.typeModifierExpr);
+  forwards to
+    ableC_Expr {
+      inst $Name{@fn}<$TypeName{targ}>($Expr{@e1}, $Expr{@e2}, $Expr{@trail})
     };
 }
 

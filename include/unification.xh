@@ -116,6 +116,7 @@ static inline unification_trail new_trail(arena_t ar) {
   return new vector<datatype _trail_action>(0);
 }
 
+// Note that action must have been heap-allocated
 static inline void push_action(unification_trail trail, closure<(void) -> void> action) {
   trail.append(_Action(action));
 }
@@ -128,6 +129,8 @@ static inline void undo_trail(unification_trail trail, size_t index) {
       }
       _Action(action) -> {
         action();
+        allocate_using heap;
+        delete action;
       }
     }
   }

@@ -16,7 +16,10 @@ int main() {
     printf("%s\n", show(b).text);
 
     unification_trail trail = {};
-    push_action(trail, lambda () -> void { printf("First\n"); });
+    {
+      allocate_using heap;
+      push_action(trail, lambda () -> void { printf("First\n"); });
+    }
     if (unify(a, b, trail)) {
       printf("%lu\n", trail.size);
       printf("%s\n", show(a).text);
@@ -25,7 +28,10 @@ int main() {
       printf("fail\n");
       return 1;
     }
-    push_action(trail, lambda () -> void { printf("Second\n"); });
+    {
+      allocate_using heap;
+      push_action(trail, lambda () -> void { printf("Second\n"); });
+    }
 
     undo_trail(trail, 0);
     printf("%s\n", show(a).text);
