@@ -9,7 +9,6 @@ grammar edu:umn:cs:melt:exts:ableC:unification;
 exports edu:umn:cs:melt:exts:ableC:unification:abstractsyntax;
 exports edu:umn:cs:melt:exts:ableC:unification:concretesyntax;
 
-exports edu:umn:cs:melt:exts:ableC:string;
 exports edu:umn:cs:melt:exts:ableC:vector;
 exports edu:umn:cs:melt:exts:ableC:algebraicDataTypes;
 exports edu:umn:cs:melt:exts:ableC:templating;
@@ -17,3 +16,4 @@ exports edu:umn:cs:melt:exts:ableC:templateAlgebraicDataTypes;
 exports edu:umn:cs:melt:exts:ableC:constructor;
 exports edu:umn:cs:melt:exts:ableC:templateConstructor;
 exports edu:umn:cs:melt:exts:ableC:closure;
+exports edu:umn:cs:melt:exts:ableC:allocation;

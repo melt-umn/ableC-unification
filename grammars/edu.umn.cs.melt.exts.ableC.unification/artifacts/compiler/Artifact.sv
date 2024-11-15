@@ -13,8 +13,8 @@ import edu:umn:cs:melt:ableC:drivers:compile;
 
 parser extendedParser :: cst:Root {
   edu:umn:cs:melt:ableC:concretesyntax;
-  edu:umn:cs:melt:exts:ableC:allocation;
   edu:umn:cs:melt:exts:ableC:unification;
+  edu:umn:cs:melt:exts:ableC:string;
 } 
 
 fun main IO<Integer> ::= args::[String] = driver(args, extendedParser);
