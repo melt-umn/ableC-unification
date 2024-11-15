@@ -2,6 +2,7 @@
 #include <alloca.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <setjmp.h>
 
 #ifndef _UNIFICATION_XH
 #define _UNIFICATION_XH
