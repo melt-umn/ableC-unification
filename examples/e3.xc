@@ -13,6 +13,10 @@ datatype Type {
   Bool();
 };
 
+size_t showTypeMaxLen(Type t);
+size_t showType(char *buf, Type t);
+show Type with showTypeMaxLen, showType;
+
 size_t showTypeMaxLen(Type t) {
   match (t) {
     ?&Fn(param, res) -> {
@@ -49,8 +53,6 @@ size_t showType(char *buf, Type t) {
     }
   }
 }
-
-show Type with showTypeMaxLen, showType;
 
 Type freshType(arena_t ar) {
   allocate_using arena ar;
