@@ -118,6 +118,24 @@ size_t show_var(char *buffer, a ?var) {
   }
 }
 
+template<typename a>
+void set_var(a ?var, a val) {
+  if (!(void *)var) {
+    fprintf(stderr, "Cannot set null variable\n");
+    abort();
+  }
+  *(_var_d<a> *)var = _Bound(val);
+}
+
+template<typename a>
+void unset_var(a ?var) {
+  if (!(void *)var) {
+    fprintf(stderr, "Cannot unset null variable\n");
+    abort();
+  }
+  *(_var_d<a> *)var = _Free();
+}
+
 datatype _trail_action {
   _Sub(enum _var_d_tag *tag);
   _Action(closure<(void) -> void> action);
