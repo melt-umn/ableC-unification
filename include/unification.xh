@@ -24,7 +24,8 @@ _Bool is_bound(a ?var) {
   return match ((_var_d<a> *)var)
     (&_Free() -> 0;
      &_Bound(_) -> 1;
-     &_BoundVar(other_var) -> is_bound(other_var););
+     &_BoundVar(other_var) -> is_bound(other_var);
+     NULL -> (fprintf(stderr, "Error: Cannot access is_bound of null variable\n"), abort(), 0););
 }
 
 template<typename a>
@@ -39,6 +40,10 @@ a value(a ?var) {
     }
     &_BoundVar(other_var) -> {
       return value(other_var);
+    }
+    NULL -> {
+      fprintf(stderr, "Error: Cannot access value of null variable\n");
+      abort();
     }
   }
 }
@@ -56,6 +61,10 @@ a value_loc(a ?var, const char *loc) {
     &_BoundVar(other_var) -> {
       return value(other_var);
     }
+    NULL -> {
+      fprintf(stderr, "Error: Value demanded of null variable at %s\n", loc);
+      abort();
+    }
   }
 }
 
@@ -71,6 +80,10 @@ a ?base_var(a ?var) {
     }
     &_BoundVar(other_var) -> {
       return base_var(other_var);
+    }
+    NULL -> {
+      fprintf(stderr, "Error: Cannot access base of null variable\n");
+      abort();
     }
   }
 }
