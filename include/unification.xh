@@ -154,6 +154,10 @@ static inline void push_action(unification_trail trail, closure<(void) -> void> 
 }
 
 static inline void undo_trail(unification_trail trail, size_t index) {
+  if (index > trail.length) {
+    fprintf(stderr, "Trail index %lu out of bounds\n", index);
+    abort();
+  }
   for (size_t i = trail.length; i > index; i--) {
     match (trail[i - 1]) {
       _Sub(tag) -> {
