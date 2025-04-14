@@ -59,7 +59,7 @@ a value_loc(a ?var, const char *loc) {
       return val;
     }
     &_BoundVar(other_var) -> {
-      return value(other_var);
+      return value_loc(other_var, loc);
     }
     NULL -> {
       fprintf(stderr, "Error: Value demanded of null variable at %s\n", loc);
